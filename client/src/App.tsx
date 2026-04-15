@@ -12,6 +12,8 @@ import BlockEditor from "./pages/BlockEditor";
 import Notebook from "./pages/Notebook";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminConsole from "./pages/AdminConsole";
+import MLEnvironment from "./pages/MLEnvironment";
+import CreateProject from "./pages/CreateProject";
 
 function App() {
   return (
@@ -30,9 +32,11 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/activities" element={<Activities />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/create-project" element={<CreateProject />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/block-editor" element={<BlockEditor />} />
             <Route path="/notebook" element={<Notebook />} />
+            <Route path="/ml-environment" element={<MLEnvironment />} />
             <Route
               path="/teacher"
               element={

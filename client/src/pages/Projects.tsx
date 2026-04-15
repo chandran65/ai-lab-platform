@@ -97,13 +97,13 @@ export default function Projects() {
           </h1>
           <p className="text-slate-500 mt-1">Manage your AI projects</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
+        <Link
+          to="/create-project"
           className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
         >
           <Plus className="h-4 w-4" />
           New Project
-        </button>
+        </Link>
       </div>
 
       <div className="relative max-w-md">

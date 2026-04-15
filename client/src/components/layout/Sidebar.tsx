@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard, Sparkles, FolderOpen, Code, FileCode,
-  GraduationCap, Shield, LogOut, Brain
+  GraduationCap, Shield, LogOut, Brain, Cpu
 } from "lucide-react";
 
 const studentMenu = [
@@ -11,6 +11,7 @@ const studentMenu = [
   { path: "/projects", label: "My Projects", icon: FolderOpen },
   { path: "/block-editor", label: "Block Coding", icon: Code },
   { path: "/notebook", label: "Python Notebook", icon: FileCode },
+  { path: "/create-project", label: "ML Environment", icon: Cpu },
 ];
 
 const teacherMenu = [
