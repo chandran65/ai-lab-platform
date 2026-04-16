@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Xarrow, { Xwrapper } from 'react-xarrows';
-import { Upload, Camera, Plus, Edit2, MoreVertical, ChevronDown, ChevronUp, X, Play, Loader2, Download, Info, CheckCircle2, AlertCircle, Mic, MessageSquare, Activity, Focus, ScatterChart, Hand } from 'lucide-react';
+import { Upload, Camera, Edit2, MoreVertical, ChevronDown, ChevronUp, X, Loader2, Download, Info, CheckCircle2, Mic, MessageSquare, Activity, Focus, ScatterChart, Hand } from 'lucide-react';
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
@@ -44,7 +44,7 @@ export default function MLEnvironment() {
   const [classifier, setClassifier] = useState<knnClassifier.KNNClassifier | null>(null);
   const [net, setNet] = useState<mobilenet.MobileNet | null>(null);
   const [poseDetector, setPoseDetector] = useState<poseDetection.PoseDetector | null>(null);
-  const [speechTransfer, setSpeechTransfer] = useState<speechCommands.TransferBrowserFftSpeechCommandRecognizer | null>(null);
+  const [speechTransfer, setSpeechTransfer] = useState<speechCommands.TransferSpeechCommandRecognizer | null>(null);
   const [objectDetector, setObjectDetector] = useState<cocoSsd.ObjectDetection | null>(null);
   
   const [isLoadingModel, setIsLoadingModel] = useState(true);
@@ -62,7 +62,7 @@ export default function MLEnvironment() {
   const [activeWebcamClass, setActiveWebcamClass] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const captureCanvasRef = useRef<HTMLCanvasElement>(null);
+
   
   // Bulk upload extraction state
   const [extractionProgress, setExtractionProgress] = useState<{classId: number, current: number, total: number} | null>(null);
@@ -285,7 +285,7 @@ export default function MLEnvironment() {
         await speechTransfer.train({
             epochs: numEpochs,
             callback: {
-                onEpochEnd: async (epoch, logs) => {
+                onEpochEnd: async (epoch: number, logs: any) => {
                     let acc = logs?.acc || Math.min(0.99, (epoch / numEpochs) * 1.5);
                     generatedData.push({ epoch: epoch + 1, accuracy: acc });
                     setChartData([...generatedData]);
@@ -323,8 +323,8 @@ export default function MLEnvironment() {
         }
         
         if (isAudio && speechTransfer) {
-             await speechTransfer.listen(result => {
-                 const scores = Array.from(result.scores);
+             await speechTransfer.listen((result: any) => {
+                 const scores = Array.from(result.scores) as number[];
                  const classNames = speechTransfer.wordLabels();
                  const maxScoreId = scores.indexOf(Math.max(...scores));
                  if (maxScoreId !== -1 && classNames[maxScoreId] !== "_background_noise_") {

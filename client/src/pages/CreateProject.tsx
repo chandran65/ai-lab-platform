@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Image as ImageIcon, Focus, Activity, Hand, AudioLines, ScatterChart, MessageSquare } from "lucide-react";
 
