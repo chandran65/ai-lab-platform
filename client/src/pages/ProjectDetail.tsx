@@ -29,6 +29,7 @@ interface TrainingJob {
   progress: number;
   config: string;
   metrics: string;
+  result?: any;
   created_at: string;
 }
 
