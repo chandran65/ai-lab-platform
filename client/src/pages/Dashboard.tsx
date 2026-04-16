@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { dashboardAPI } from "../services/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FolderOpen, Sparkles, Trophy, Clock, TerminalSquare, BookOpenText, Puzzle, LayoutGrid, BrainCircuit, Box, Palette, ArrowRight, XCircle, GraduationCap, Users } from "lucide-react";
+import { FolderOpen, Sparkles, Trophy, TerminalSquare, BookOpenText, Puzzle, LayoutGrid, BrainCircuit, Box, Palette, XCircle, GraduationCap, Users } from "lucide-react";
 
 interface Stats {
   projects_count: number;
