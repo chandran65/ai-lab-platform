@@ -323,7 +323,7 @@ export default function MLEnvironment() {
         }
         
         if (isAudio && speechTransfer) {
-             await speechTransfer.listen((result: any) => {
+             await speechTransfer.listen(async (result: any) => {
                  const scores = Array.from(result.scores) as number[];
                  const classNames = speechTransfer.wordLabels();
                  const maxScoreId = scores.indexOf(Math.max(...scores));
