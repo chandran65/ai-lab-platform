@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { projectsAPI } from "../services/api";
 import { FolderOpen, Plus, Search, Image, FileText, Eye, Music, ArrowRight, Trash2 } from "lucide-react";
