@@ -15,6 +15,12 @@ import AdminConsole from "./pages/AdminConsole";
 import MLEnvironment from "./pages/MLEnvironment";
 import CreateProject from "./pages/CreateProject";
 
+import GameHub from "./pages/GameHub";
+import TrainBuilder from "./games/train/TrainBuilder";
+import TurtlePath from "./games/turtle/TurtlePath";
+// @ts-ignore
+import WeatherApp from "./games/weather/App";
+
 function App() {
   return (
     <BrowserRouter>
@@ -29,7 +35,11 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<GameHub />} />
+            <Route path="/games/weather" element={<WeatherApp />} />
+            <Route path="/games/train" element={<TrainBuilder />} />
+            <Route path="/games/turtle" element={<TurtlePath />} />
+            <Route path="/sandbox" element={<Dashboard />} />
             <Route path="/activities" element={<Activities />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/create-project" element={<CreateProject />} />

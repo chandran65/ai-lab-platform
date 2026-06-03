@@ -50,7 +50,7 @@ def get_db():
 # ======================== SECURITY ========================
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
@@ -74,16 +74,32 @@ def decode_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> dict:
-    payload = decode_token(credentials.credentials)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    with get_db() as db:
-        user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return dict(user)
+def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)) -> dict:
+    if not credentials:
+        # Fallback to demo student for guest access
+        with get_db() as db:
+            user = db.execute("SELECT * FROM users WHERE email = 'student@demo.ailab.edu' LIMIT 1").fetchone()
+            if user:
+                return dict(user)
+        raise HTTPException(status_code=401, detail="Missing authorization credentials")
+        
+    try:
+        payload = decode_token(credentials.credentials)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        with get_db() as db:
+            user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        return dict(user)
+    except Exception:
+        # Fallback to demo student for guest access
+        with get_db() as db:
+            user = db.execute("SELECT * FROM users WHERE email = 'student@demo.ailab.edu' LIMIT 1").fetchone()
+            if user:
+                return dict(user)
+        raise HTTPException(status_code=401, detail="Invalid token and guest fallback failed")
 
 # ======================== SCHEMAS ========================
 

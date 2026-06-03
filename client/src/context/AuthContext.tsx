@@ -29,6 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
+      setUser({
+        id: "guest-student-id",
+        email: "student@demo.ailab.edu",
+        full_name: "Guest Explorer",
+        role: "student",
+        school_id: "demo-school-id"
+      });
       setIsLoading(false);
       return;
     }
@@ -36,6 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await authAPI.getMe();
       setUser(res.data);
     } catch {
+      setUser({
+        id: "guest-student-id",
+        email: "student@demo.ailab.edu",
+        full_name: "Guest Explorer",
+        role: "student",
+        school_id: "demo-school-id"
+      });
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
     } finally {
