@@ -1,29 +1,72 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Trophy, Play, Star } from "lucide-react";
+import { gamesAPI } from "../services/api";
 
 export default function GameHub() {
   const navigate = useNavigate();
   
-  // Dynamic stats loaded from localStorage
+  // Dynamic stats loaded from database / localStorage
   const [weatherLevel, setWeatherLevel] = useState(1);
   const [weatherCoins, setWeatherCoins] = useState(0);
   const [trainStars, setTrainStars] = useState(0);
+  const [turtleLevel, setTurtleLevel] = useState(1);
+  const [puppyLevel, setPuppyLevel] = useState(1);
+  const [colorLevel, setColorLevel] = useState(1);
   
   useEffect(() => {
-    try {
-      const weatherData = localStorage.getItem("weather-adventure-progress");
-      if (weatherData) {
-        const parsed = JSON.parse(weatherData);
-        if (parsed.level) setWeatherLevel(parsed.level);
-        if (parsed.coins) setWeatherCoins(parsed.coins);
+    const loadStats = async () => {
+      // 1. Weather Adventure (localStorage)
+      try {
+        const weatherData = localStorage.getItem("weather-adventure-progress");
+        if (weatherData) {
+          const parsed = JSON.parse(weatherData);
+          if (parsed.level) setWeatherLevel(parsed.level);
+          if (parsed.coins) setWeatherCoins(parsed.coins);
+        }
+      } catch {}
+
+      // 2. Choo Choo Train Builder (backend/localStorage)
+      try {
+        const trainRes = await gamesAPI.getProgress("train_builder");
+        const progress = trainRes.data.progress_data;
+        if (progress && typeof progress.stars === "number") {
+          setTrainStars(progress.stars);
+        } else {
+          setTrainStars(Number(localStorage.getItem("train_stars") || "0"));
+        }
+      } catch {
+        setTrainStars(Number(localStorage.getItem("train_stars") || "0"));
       }
-      
-      const starsVal = Number(localStorage.getItem("train_stars") || "0");
-      setTrainStars(starsVal);
-    } catch (e) {
-      console.warn("Failed to load local storage stats:", e);
-    }
+
+      // 3. Turtle Path (backend)
+      try {
+        const turtleRes = await gamesAPI.getProgress("turtle_path");
+        const progress = turtleRes.data.progress_data;
+        if (progress && typeof progress.maxUnlockedLevel === "number") {
+          setTurtleLevel(progress.maxUnlockedLevel + 1);
+        }
+      } catch {}
+
+      // 4. Feed the Puppy (backend)
+      try {
+        const puppyRes = await gamesAPI.getProgress("feed_puppy");
+        const progress = puppyRes.data.progress_data;
+        if (progress && typeof progress.maxUnlockedLevel === "number") {
+          setPuppyLevel(progress.maxUnlockedLevel + 1);
+        }
+      } catch {}
+
+      // 5. Colour Magic (backend)
+      try {
+        const colorRes = await gamesAPI.getProgress("colour_magic");
+        const progress = colorRes.data.progress_data;
+        if (progress && typeof progress.maxUnlockedLevel === "number") {
+          setColorLevel(progress.maxUnlockedLevel + 1);
+        }
+      } catch {}
+    };
+    loadStats();
   }, []);
 
   const games = [
@@ -55,7 +98,27 @@ export default function GameHub() {
       description: "Queue movement arrows in the planning sequencer to guide the turtle home safely while avoiding floating rock traps!",
       badge: "Algorithmic Code",
       color: "from-emerald-500 to-green-400 border-emerald-500/20 shadow-emerald-500/10",
-      stats: "5 levels ( Meadow to Galaxy )"
+      stats: `Level ${Math.min(turtleLevel, 5)} / 5 | Meadow to Galaxy`
+    },
+    {
+      id: "puppy",
+      title: "Feed the Puppy",
+      path: "/games/puppy",
+      emoji: "🐶",
+      description: "Match the hungry puppy's dream food from a colorful pile while avoiding chocolate, grapes, and other harmful foods!",
+      badge: "Decision Match",
+      color: "from-[#FF9F43] to-[#FFB300] border-orange-500/20 shadow-orange-500/10",
+      stats: `Level ${Math.min(puppyLevel, 10)} / 10 | Puppy Care Expert`
+    },
+    {
+      id: "color",
+      title: "Colour Magic Machine",
+      path: "/games/color",
+      emoji: "🎨",
+      description: "Pick and mix base palette colors inside the magic swirl mixer to match target secondary, tertiary, and quaternary shades!",
+      badge: "Color Physics",
+      color: "from-purple-500 to-pink-400 border-purple-500/20 shadow-purple-500/10",
+      stats: `Level ${Math.min(colorLevel, 10)} / 10 | Master Alchemist`
     }
   ];
 

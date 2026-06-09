@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { PlayCircle, Trash2, RotateCcw, Volume2, VolumeX, ArrowLeft, ArrowUp, ArrowDown, ArrowLeft as ArrowLeftIcon, ArrowRight, Sparkles } from "lucide-react";
+import { gamesAPI } from "../../services/api";
 
 // Web Audio API Synth Engine for Turtle Game
 const playSynth = (type: string, soundOn: boolean) => {
@@ -200,6 +201,107 @@ export default function TurtlePath() {
   const [messageColor, setMessageColor] = useState<string>("text-slate-300");
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [flashingPlayer, setFlashingPlayer] = useState<boolean>(false);
+
+  const [maxUnlockedLevel, setMaxUnlockedLevel] = useState<number>(0);
+  const [inputMode, setInputMode] = useState<"arrows" | "block_code">("arrows");
+  const [jsonCode, setJsonCode] = useState<string>("[\n  { \"type\": \"move\", \"direction\": \"RIGHT\", \"times\": 3 }\n]");
+
+  // Load progress from backend on mount
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const res = await gamesAPI.getProgress("turtle_path");
+        const progress = res.data.progress_data;
+        if (progress && typeof progress.maxUnlockedLevel === "number") {
+          setMaxUnlockedLevel(progress.maxUnlockedLevel);
+          setCurrentLevel(progress.maxUnlockedLevel);
+        }
+      } catch (err) {
+        console.error("Failed to load turtle path progress:", err);
+      }
+    };
+    loadProgress();
+  }, []);
+
+  const appendSnippet = (direction: string, times: number = 1) => {
+    try {
+      let currentArray: any[] = [];
+      try {
+        currentArray = JSON.parse(jsonCode);
+        if (!Array.isArray(currentArray)) currentArray = [];
+      } catch {
+        currentArray = [];
+      }
+      currentArray.push({ type: "move", direction, times });
+      setJsonCode(JSON.stringify(currentArray, null, 2));
+      setMessage(`Added JSON command: Move ${direction} x${times}`);
+      setMessageColor("text-sky-300");
+      playSynth("add", soundOn);
+    } catch {
+      setJsonCode(prev => prev + `,\n  { "type": "move", "direction": "${direction}", "times": ${times} }`);
+    }
+  };
+
+  const appendRepeatSnippet = (direction: string, times: number) => {
+    try {
+      let currentArray: any[] = [];
+      try {
+        currentArray = JSON.parse(jsonCode);
+        if (!Array.isArray(currentArray)) currentArray = [];
+      } catch {
+        currentArray = [];
+      }
+      currentArray.push({
+        type: "repeat",
+        times,
+        commands: [{ type: "move", direction, times: 1 }]
+      });
+      setJsonCode(JSON.stringify(currentArray, null, 2));
+      setMessage(`Added JSON Repeat: ${direction} x${times}`);
+      setMessageColor("text-sky-300");
+      playSynth("add", soundOn);
+    } catch {}
+  };
+
+  const compileJsonToQueue = (code: string): string[] => {
+    try {
+      const blocks = JSON.parse(code);
+      if (!Array.isArray(blocks)) {
+        throw new Error("JSON must be a list of commands like [ ... ]");
+      }
+      const queue: string[] = [];
+      
+      const parseBlock = (block: any) => {
+        if (!block || typeof block !== "object") return;
+        if (block.type === "move") {
+          const dir = (block.direction || "").toUpperCase();
+          if (dir !== "UP" && dir !== "DOWN" && dir !== "LEFT" && dir !== "RIGHT") {
+            throw new Error(`Invalid direction: "${block.direction}". Must be UP, DOWN, LEFT, or RIGHT.`);
+          }
+          const times = typeof block.times === "number" ? block.times : 1;
+          for (let i = 0; i < times; i++) {
+            queue.push(dir);
+          }
+        } else if (block.type === "repeat") {
+          const times = typeof block.times === "number" ? block.times : 1;
+          const subCommands = block.commands;
+          if (!Array.isArray(subCommands)) {
+            throw new Error("Repeat block must have a 'commands' array");
+          }
+          for (let t = 0; t < times; t++) {
+            subCommands.forEach(sub => parseBlock(sub));
+          }
+        } else {
+          throw new Error(`Unknown block type: "${block.type}"`);
+        }
+      };
+
+      blocks.forEach(block => parseBlock(block));
+      return queue;
+    } catch (err: any) {
+      throw new Error(err.message || "Failed to parse block code JSON");
+    }
+  };
   
   // Confetti particles for win screen
   const [confetti, setConfetti] = useState<{ id: number; left: number; top: number; color: string; size: number }[]>([]);
@@ -269,10 +371,30 @@ export default function TurtlePath() {
   // Execute sequence
   const executeQueue = () => {
     if (gameWon || executing) return;
-    if (moveQueue.length === 0) {
-      setMessage("Queue is empty! Queue up some moves first.");
-      setMessageColor("text-amber-400");
-      return;
+    
+    let activeQueue = [...moveQueue];
+    
+    if (inputMode === "block_code") {
+      try {
+        activeQueue = compileJsonToQueue(jsonCode);
+        if (activeQueue.length === 0) {
+          setMessage("Compiled empty sequence! Add some blocks.");
+          setMessageColor("text-amber-400");
+          return;
+        }
+        setMoveQueue(activeQueue);
+      } catch (err: any) {
+        playSynth("failure", soundOn);
+        setMessage(`JSON Syntax Error: ${err.message}`);
+        setMessageColor("text-red-400");
+        return;
+      }
+    } else {
+      if (moveQueue.length === 0) {
+        setMessage("Queue is empty! Queue up some moves first.");
+        setMessageColor("text-amber-400");
+        return;
+      }
     }
 
     setExecuting(true);
@@ -283,7 +405,7 @@ export default function TurtlePath() {
     let currentPos = [...levelInfo.start] as [number, number];
 
     const stepInterval = setInterval(() => {
-      if (stepIdx >= moveQueue.length) {
+      if (stepIdx >= activeQueue.length) {
         clearInterval(stepInterval);
         setExecuting(false);
         // If finished queue and not at goal, we failed
@@ -301,7 +423,7 @@ export default function TurtlePath() {
         return;
       }
 
-      const move = moveQueue[stepIdx];
+      const move = activeQueue[stepIdx];
       stepIdx++;
       setSteps(prev => prev + 1);
 
@@ -355,6 +477,14 @@ export default function TurtlePath() {
         setMessage("🎉 SUCCESS! The turtle reached Home!");
         setMessageColor("text-green-400");
         triggerVictoryConfetti();
+
+        const nextLvl = Math.max(maxUnlockedLevel, currentLevel + 1);
+        if (nextLvl < LEVELS.length) {
+          setMaxUnlockedLevel(nextLvl);
+        }
+        gamesAPI.saveProgress("turtle_path", {
+          maxUnlockedLevel: nextLvl
+        }).catch(err => console.error("Failed to save turtle path progress:", err));
       }
     }, 450);
   };
@@ -452,64 +582,149 @@ export default function TurtlePath() {
             <p className="text-[11px] font-bold text-slate-300 leading-normal">{levelInfo.hint}</p>
           </div>
 
-          <div className="border-t border-slate-800 my-2" />
-
-          {/* Movement Queuer HUD */}
-          <div className="space-y-2">
-            <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center">Command Queue</h3>
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 min-h-[4.5rem] flex flex-wrap gap-1.5 items-center justify-center text-center">
-              {moveQueue.length === 0 ? (
-                <span className="text-slate-600 text-xs italic font-bold">[ queue empty ]</span>
-              ) : (
-                moveQueue.map((m, idx) => (
-                  <span
-                    key={idx}
-                    className="w-7 h-7 bg-cyan-950 text-cyan-400 border border-cyan-500/30 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm"
-                    title={m}
-                  >
-                    {DIR_SYMBOLS[m]}
-                  </span>
-                ))
-              )}
-            </div>
+          {/* Input Mode Selector Toggle */}
+          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 gap-1 my-1">
+            <button
+              onClick={() => setInputMode("arrows")}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                inputMode === "arrows"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              🎮 Arrows
+            </button>
+            <button
+              onClick={() => setInputMode("block_code")}
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                inputMode === "block_code"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              💻 JSON Blocks
+            </button>
           </div>
 
-          {/* Direction inputs */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Add Moves</h3>
-            <div className="flex flex-col items-center gap-2">
-              <button
-                disabled={executing || gameWon}
-                onClick={() => addMove("UP")}
-                className="w-16 h-10 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-blue-800"
-              >
-                <ArrowUp className="w-5 h-5 text-white" />
-              </button>
-              <div className="flex gap-2">
+          {inputMode === "arrows" ? (
+            <>
+              {/* Movement Queuer HUD */}
+              <div className="space-y-2">
+                <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center">Command Queue</h3>
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 min-h-[4.5rem] flex flex-wrap gap-1.5 items-center justify-center text-center">
+                  {moveQueue.length === 0 ? (
+                    <span className="text-slate-600 text-xs italic font-bold">[ queue empty ]</span>
+                  ) : (
+                    moveQueue.map((m, idx) => (
+                      <span
+                        key={idx}
+                        className="w-7 h-7 bg-cyan-950 text-cyan-400 border border-cyan-500/30 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm"
+                        title={m}
+                      >
+                        {DIR_SYMBOLS[m]}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Direction inputs */}
+              <div className="space-y-3">
+                <h3 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Add Moves</h3>
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    disabled={executing || gameWon}
+                    onClick={() => addMove("UP")}
+                    className="w-16 h-10 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-blue-800"
+                  >
+                    <ArrowUp className="w-5 h-5 text-white" />
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      disabled={executing || gameWon}
+                      onClick={() => addMove("LEFT")}
+                      className="w-16 h-10 bg-amber-600 hover:bg-amber-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-amber-800"
+                    >
+                      <ArrowLeftIcon className="w-5 h-5 text-white" />
+                    </button>
+                    <button
+                      disabled={executing || gameWon}
+                      onClick={() => addMove("RIGHT")}
+                      className="w-16 h-10 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-purple-800"
+                    >
+                      <ArrowRight className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <button
+                    disabled={executing || gameWon}
+                    onClick={() => addMove("DOWN")}
+                    className="w-16 h-10 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-teal-800"
+                  >
+                    <ArrowDown className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider">JSON Code</h3>
                 <button
-                  disabled={executing || gameWon}
-                  onClick={() => addMove("LEFT")}
-                  className="w-16 h-10 bg-amber-600 hover:bg-amber-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-amber-800"
+                  onClick={() => {
+                    setJsonCode("[]");
+                    playSynth("clear", soundOn);
+                  }}
+                  className="text-[10px] text-red-400 hover:text-red-300 font-bold"
                 >
-                  <ArrowLeftIcon className="w-5 h-5 text-white" />
-                </button>
-                <button
-                  disabled={executing || gameWon}
-                  onClick={() => addMove("RIGHT")}
-                  className="w-16 h-10 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-purple-800"
-                >
-                  <ArrowRight className="w-5 h-5 text-white" />
+                  Clear Code
                 </button>
               </div>
-              <button
-                disabled={executing || gameWon}
-                onClick={() => addMove("DOWN")}
-                className="w-16 h-10 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 rounded-xl flex items-center justify-center font-bold shadow border-b-4 border-teal-800"
-              >
-                <ArrowDown className="w-5 h-5 text-white" />
-              </button>
+              <textarea
+                value={jsonCode}
+                onChange={(e) => setJsonCode(e.target.value)}
+                className="w-full h-32 p-2 text-[10px] bg-slate-950 border border-slate-800 rounded-xl font-mono text-cyan-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 overflow-y-auto whitespace-pre leading-relaxed"
+                spellCheck={false}
+              />
+              {/* Block Quick Templates */}
+              <div className="space-y-1.5">
+                <h4 className="text-[9px] text-slate-500 font-black uppercase tracking-wider">Add Commands</h4>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => appendSnippet("UP")}
+                    className="py-1 bg-blue-900/40 hover:bg-blue-900 text-blue-300 rounded border border-blue-500/20 text-[9px] font-bold"
+                  >
+                    + Move UP
+                  </button>
+                  <button
+                    onClick={() => appendSnippet("DOWN")}
+                    className="py-1 bg-teal-900/40 hover:bg-teal-900 text-teal-300 rounded border border-teal-500/20 text-[9px] font-bold"
+                  >
+                    + Move DOWN
+                  </button>
+                  <button
+                    onClick={() => appendSnippet("LEFT")}
+                    className="py-1 bg-amber-900/40 hover:bg-amber-900 text-amber-300 rounded border border-amber-500/20 text-[9px] font-bold"
+                  >
+                    + Move LEFT
+                  </button>
+                  <button
+                    onClick={() => appendSnippet("RIGHT")}
+                    className="py-1 bg-purple-900/40 hover:bg-purple-900 text-purple-300 rounded border border-purple-500/20 text-[9px] font-bold"
+                  >
+                    + Move RIGHT
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 mt-1">
+                  <button
+                    onClick={() => appendRepeatSnippet("RIGHT", 3)}
+                    className="py-1 bg-indigo-900/40 hover:bg-indigo-900 text-indigo-300 rounded border border-indigo-500/20 text-[9px] font-bold"
+                  >
+                    🔄 Loop: Move RIGHT x3
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Console control buttons */}

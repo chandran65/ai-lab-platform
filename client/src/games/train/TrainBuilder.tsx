@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Star, Play, Sparkles, ArrowLeft, RotateCcw, AlertCircle, HelpCircle } from "lucide-react";
+import { gamesAPI } from "../../services/api";
 
 // Web Audio API Retro Sound Effects Engine
 const playSound = (type: "click" | "success" | "failure" | "whistle" | "snap") => {
@@ -160,6 +161,29 @@ export default function TrainBuilder() {
     return Number(localStorage.getItem("train_max_level") || "1");
   });
   const [screen, setScreen] = useState<"menu" | "levels" | "help" | "game">("menu");
+
+  // Load progress from backend on mount
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const res = await gamesAPI.getProgress("train_builder");
+        const progress = res.data.progress_data;
+        if (progress) {
+          if (typeof progress.stars === "number") {
+            setStars(progress.stars);
+            localStorage.setItem("train_stars", String(progress.stars));
+          }
+          if (typeof progress.maxUnlockedLevel === "number") {
+            setMaxUnlockedLevel(progress.maxUnlockedLevel);
+            localStorage.setItem("train_max_level", String(progress.maxUnlockedLevel));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load train builder progress:", err);
+      }
+    };
+    loadProgress();
+  }, []);
   
   // Game States
   const [placedCars, setPlacedCars] = useState<(string | null)[]>([]);
@@ -309,12 +333,19 @@ export default function TrainBuilder() {
       setFeedback("🎉 YAY! YOU DID IT! 🎉");
       setFeedbackType("success");
       
+      let nextLvl = maxUnlockedLevel;
       // Unlock next level
       if (currentLevel === maxUnlockedLevel && currentLevel < 8) {
-        const nextLvl = currentLevel + 1;
+        nextLvl = currentLevel + 1;
         setMaxUnlockedLevel(nextLvl);
         localStorage.setItem("train_max_level", String(nextLvl));
       }
+
+      // Save progress to backend
+      gamesAPI.saveProgress("train_builder", {
+        stars: newStars,
+        maxUnlockedLevel: nextLvl
+      }).catch(err => console.error("Failed to save train builder progress:", err));
       
       triggerConfetti();
       setTimeout(() => {

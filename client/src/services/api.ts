@@ -50,6 +50,14 @@ export const authAPI = {
   updateMe: (data: Record<string, unknown>) => api.put("/auth/me", data),
   changePassword: (old_password: string, new_password: string) =>
     api.put("/auth/password", { old_password, new_password }),
+  toggleEnforcement: (enabled: boolean) => api.post("/auth/toggle-enforcement", { enabled }),
+  getEnforcementStatus: () => api.get("/auth/enforcement-status"),
+};
+
+export const gamesAPI = {
+  getProgress: (gameId: string) => api.get(`/games/progress/${gameId}`),
+  saveProgress: (gameId: string, progressData: Record<string, unknown>) =>
+    api.post(`/games/progress/${gameId}`, { progress_data: progressData }),
 };
 
 export const dashboardAPI = {

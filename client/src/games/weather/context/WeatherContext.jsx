@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { playLevelUp } from "../utils/audio";
+import { gamesAPI } from "../../../services/api";
 
 const WeatherContext = createContext();
 
@@ -18,26 +19,60 @@ export const WeatherProvider = ({ children }) => {
   const [relicsDiscovered, setRelicsDiscovered] = useState(0);
   const [legendariesFound, setLegendariesFound] = useState(0);
 
-  // Load stats from localStorage on initial mount
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Load stats from backend (and fallback to localStorage) on initial mount
   useEffect(() => {
-    try {
-      const savedData = localStorage.getItem("weather-adventure-progress");
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        if (parsed.xp !== undefined) setXp(parsed.xp);
-        if (parsed.level !== undefined) setLevel(parsed.level);
-        if (parsed.coins !== undefined) setCoins(parsed.coins);
-        if (parsed.animalsSaved !== undefined) setAnimalsSaved(parsed.animalsSaved);
-        if (parsed.plantsGrown !== undefined) setPlantsGrown(parsed.plantsGrown);
-        if (parsed.relicsDiscovered !== undefined) setRelicsDiscovered(parsed.relicsDiscovered);
-        if (parsed.legendariesFound !== undefined) setLegendariesFound(parsed.legendariesFound);
+    const loadProgress = async () => {
+      try {
+        const res = await gamesAPI.getProgress("weather_adventure");
+        const parsed = res.data.progress_data;
+        if (parsed && Object.keys(parsed).length > 0) {
+          if (parsed.xp !== undefined) setXp(parsed.xp);
+          if (parsed.level !== undefined) setLevel(parsed.level);
+          if (parsed.coins !== undefined) setCoins(parsed.coins);
+          if (parsed.animalsSaved !== undefined) setAnimalsSaved(parsed.animalsSaved);
+          if (parsed.plantsGrown !== undefined) setPlantsGrown(parsed.plantsGrown);
+          if (parsed.relicsDiscovered !== undefined) setRelicsDiscovered(parsed.relicsDiscovered);
+          if (parsed.legendariesFound !== undefined) setLegendariesFound(parsed.legendariesFound);
+        } else {
+          // Fallback to localStorage if backend has no progress
+          const savedData = localStorage.getItem("weather-adventure-progress");
+          if (savedData) {
+            const localParsed = JSON.parse(savedData);
+            if (localParsed.xp !== undefined) setXp(localParsed.xp);
+            if (localParsed.level !== undefined) setLevel(localParsed.level);
+            if (localParsed.coins !== undefined) setCoins(localParsed.coins);
+            if (localParsed.animalsSaved !== undefined) setAnimalsSaved(localParsed.animalsSaved);
+            if (localParsed.plantsGrown !== undefined) setPlantsGrown(localParsed.plantsGrown);
+            if (localParsed.relicsDiscovered !== undefined) setRelicsDiscovered(localParsed.relicsDiscovered);
+            if (localParsed.legendariesFound !== undefined) setLegendariesFound(localParsed.legendariesFound);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load backend progress:", e);
+        // Fallback to localStorage
+        const savedData = localStorage.getItem("weather-adventure-progress");
+        if (savedData) {
+          try {
+            const localParsed = JSON.parse(savedData);
+            if (localParsed.xp !== undefined) setXp(localParsed.xp);
+            if (localParsed.level !== undefined) setLevel(localParsed.level);
+            if (localParsed.coins !== undefined) setCoins(localParsed.coins);
+            if (localParsed.animalsSaved !== undefined) setAnimalsSaved(localParsed.animalsSaved);
+            if (localParsed.plantsGrown !== undefined) setPlantsGrown(localParsed.plantsGrown);
+            if (localParsed.relicsDiscovered !== undefined) setRelicsDiscovered(localParsed.relicsDiscovered);
+            if (localParsed.legendariesFound !== undefined) setLegendariesFound(localParsed.legendariesFound);
+          } catch {}
+        }
+      } finally {
+        setHasLoaded(true);
       }
-    } catch (e) {
-      console.warn("Failed to load local storage save:", e);
-    }
+    };
+    loadProgress();
   }, []);
 
-  // Save stats to localStorage whenever they change
+  // Save stats to backend and localStorage whenever they change
   useEffect(() => {
     try {
       const dataToSave = {
@@ -50,10 +85,15 @@ export const WeatherProvider = ({ children }) => {
         legendariesFound,
       };
       localStorage.setItem("weather-adventure-progress", JSON.stringify(dataToSave));
+      
+      if (hasLoaded) {
+        gamesAPI.saveProgress("weather_adventure", dataToSave)
+          .catch(e => console.warn("Failed to save progress to backend:", e));
+      }
     } catch (e) {
       console.warn("Failed to write to local storage save:", e);
     }
-  }, [xp, level, coins, animalsSaved, plantsGrown, relicsDiscovered, legendariesFound]);
+  }, [xp, level, coins, animalsSaved, plantsGrown, relicsDiscovered, legendariesFound, hasLoaded]);
 
   // XP progression engine
   const xpNeeded = level * 100;

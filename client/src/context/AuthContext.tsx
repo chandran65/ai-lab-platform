@@ -18,6 +18,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; full_name: string; role: string }) => Promise<void>;
   logout: () => void;
+  enforceAuth: boolean;
+  toggleEnforcement: (enabled: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -25,33 +27,51 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [enforceAuth, setEnforceAuth] = useState(false);
 
   const fetchUser = useCallback(async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setUser({
-        id: "guest-student-id",
-        email: "student@demo.ailab.edu",
-        full_name: "Guest Explorer",
-        role: "student",
-        school_id: "demo-school-id"
-      });
-      setIsLoading(false);
-      return;
-    }
     try {
-      const res = await authAPI.getMe();
-      setUser(res.data);
-    } catch {
-      setUser({
-        id: "guest-student-id",
-        email: "student@demo.ailab.edu",
-        full_name: "Guest Explorer",
-        role: "student",
-        school_id: "demo-school-id"
-      });
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      const statusRes = await authAPI.getEnforcementStatus();
+      const isEnforced = statusRes.data.enforce_authentication;
+      setEnforceAuth(isEnforced);
+
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        if (isEnforced) {
+          setUser(null);
+        } else {
+          setUser({
+            id: "guest-student-id",
+            email: "student@demo.ailab.edu",
+            full_name: "Guest Explorer",
+            role: "student",
+            school_id: "demo-school-id"
+          });
+        }
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const res = await authAPI.getMe();
+        setUser(res.data);
+      } catch {
+        if (isEnforced) {
+          setUser(null);
+        } else {
+          setUser({
+            id: "guest-student-id",
+            email: "student@demo.ailab.edu",
+            full_name: "Guest Explorer",
+            role: "student",
+            school_id: "demo-school-id"
+          });
+        }
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      }
+    } catch (err) {
+      console.error("Error in fetchUser:", err);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -81,8 +101,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const toggleEnforcement = async (enabled: boolean) => {
+    setIsLoading(true);
+    try {
+      await authAPI.toggleEnforcement(enabled);
+      await fetchUser();
+    } catch (err) {
+      console.error("Failed to toggle enforcement:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user && user.id !== "guest-student-id",
+        isLoading,
+        login,
+        register,
+        logout,
+        enforceAuth,
+        toggleEnforcement,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

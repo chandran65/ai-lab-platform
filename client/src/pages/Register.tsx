@@ -5,7 +5,6 @@ import { Brain } from "lucide-react";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("student");
   const [error, setError] = useState("");
@@ -18,7 +17,7 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      await register({ email, password, full_name: fullName, role });
+      await register({ email: fullName, password, full_name: fullName, role });
       navigate("/dashboard");
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } };
@@ -48,37 +47,26 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                placeholder="John Doe"
+                placeholder="Enter your name"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth (Password)</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                placeholder="you@school.edu"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-              <input
-                type="password"
+                type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                placeholder="••••••••"
+                placeholder="YYYY-MM-DD (e.g. 2012-05-15)"
                 required
-                minLength={8}
+                minLength={4}
               />
             </div>
             <div>
@@ -88,7 +76,7 @@ export default function Register() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
               >
-                <option value="student">Student</option>
+                <option value="student">Child (Student)</option>
                 <option value="teacher">Teacher</option>
               </select>
             </div>

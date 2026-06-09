@@ -74,8 +74,12 @@ def decode_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+ENFORCE_AUTHENTICATION = False
+
 def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)) -> dict:
     if not credentials:
+        if ENFORCE_AUTHENTICATION:
+            raise HTTPException(status_code=401, detail="Authentication required")
         # Fallback to demo student for guest access
         with get_db() as db:
             user = db.execute("SELECT * FROM users WHERE email = 'student@demo.ailab.edu' LIMIT 1").fetchone()
@@ -94,6 +98,8 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
             raise HTTPException(status_code=401, detail="User not found")
         return dict(user)
     except Exception:
+        if ENFORCE_AUTHENTICATION:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
         # Fallback to demo student for guest access
         with get_db() as db:
             user = db.execute("SELECT * FROM users WHERE email = 'student@demo.ailab.edu' LIMIT 1").fetchone()
@@ -105,10 +111,16 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 
 class UserRegister(BaseModel):
     email: str
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=4)
     full_name: str = Field(..., min_length=2)
-    role: Literal["student"] = "student"
+    role: str = "student"
     school_id: Optional[str] = None
+
+class GameProgressUpdate(BaseModel):
+    progress_data: Dict[str, Any]
+
+class AuthEnforcementRequest(BaseModel):
+    enabled: bool
 
 class UserLogin(BaseModel):
     email: str
@@ -281,6 +293,13 @@ def init_db():
             config TEXT DEFAULT '{}', result TEXT DEFAULT '{}', error_message TEXT,
             started_at TEXT, completed_at TEXT, created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS game_progress (
+            user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+            game_id TEXT NOT NULL,
+            progress_data TEXT DEFAULT '{}',
+            updated_at TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (user_id, game_id)
+        );
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
         CREATE INDEX IF NOT EXISTS idx_datasets_project ON datasets(project_id);
@@ -405,11 +424,40 @@ async def update_me(body: dict = Body(...), current_user: dict = Depends(get_cur
 async def change_password(body: dict = Body(...), current_user: dict = Depends(get_current_user)):
     if not verify_password(body.get("old_password", ""), current_user["password_hash"]):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    if len(body.get("new_password", "")) < 8:
-        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+    if len(body.get("new_password", "")) < 4:
+        raise HTTPException(status_code=400, detail="New password must be at least 4 characters")
     with get_db() as db:
         db.execute("UPDATE users SET password_hash=? WHERE id=?", (get_password_hash(body["new_password"]), current_user["id"]))
     return {"message": "Password changed successfully"}
+
+@app.post("/api/v1/auth/toggle-enforcement")
+async def toggle_auth_enforcement(req: AuthEnforcementRequest):
+    global ENFORCE_AUTHENTICATION
+    ENFORCE_AUTHENTICATION = req.enabled
+    return {"status": "success", "enforce_authentication": ENFORCE_AUTHENTICATION}
+
+@app.get("/api/v1/auth/enforcement-status")
+async def get_enforcement_status():
+    return {"enforce_authentication": ENFORCE_AUTHENTICATION}
+
+@app.get("/api/v1/games/progress/{game_id}")
+async def get_game_progress(game_id: str, current_user: dict = Depends(get_current_user)):
+    with get_db() as db:
+        row = db.execute("SELECT progress_data FROM game_progress WHERE user_id = ? AND game_id = ?", (current_user["id"], game_id)).fetchone()
+    if not row:
+        return {"progress_data": {}}
+    return {"progress_data": json.loads(row["progress_data"])}
+
+@app.post("/api/v1/games/progress/{game_id}")
+async def save_game_progress(game_id: str, body: GameProgressUpdate, current_user: dict = Depends(get_current_user)):
+    data_str = json.dumps(body.progress_data)
+    with get_db() as db:
+        row = db.execute("SELECT 1 FROM game_progress WHERE user_id = ? AND game_id = ?", (current_user["id"], game_id)).fetchone()
+        if row:
+            db.execute("UPDATE game_progress SET progress_data = ?, updated_at = datetime('now') WHERE user_id = ? AND game_id = ?", (data_str, current_user["id"], game_id))
+        else:
+            db.execute("INSERT INTO game_progress (user_id, game_id, progress_data) VALUES (?, ?, ?)", (current_user["id"], game_id, data_str))
+    return {"status": "success"}
 
 # ======================== DASHBOARD ========================
 

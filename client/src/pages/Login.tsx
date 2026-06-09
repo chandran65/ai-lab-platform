@@ -46,24 +46,24 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                placeholder="you@school.edu"
+                placeholder="Enter your name"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth (Password)</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-                placeholder="••••••••"
+                placeholder="YYYY-MM-DD (e.g. 2012-05-15)"
                 required
               />
             </div>
@@ -85,11 +85,11 @@ export default function Login() {
         </div>
 
         <div className="mt-6 p-4 bg-white/70 rounded-xl border border-slate-200 text-sm">
-          <p className="font-medium text-slate-700 mb-2">Demo Accounts:</p>
+          <p className="font-medium text-slate-700 mb-2">Demo Accounts (Name & Password):</p>
           <div className="space-y-1 text-slate-500">
-            <p><span className="font-medium">Admin:</span> admin@demo.ailab.edu / admin123</p>
-            <p><span className="font-medium">Teacher:</span> teacher@demo.ailab.edu / teacher123</p>
-            <p><span className="font-medium">Student:</span> student@demo.ailab.edu / student123</p>
+            <p><span className="font-medium">Admin Name:</span> admin@demo.ailab.edu <span className="text-slate-400">/</span> admin123</p>
+            <p><span className="font-medium">Ms. Johnson (Teacher):</span> teacher@demo.ailab.edu <span className="text-slate-400">/</span> teacher123</p>
+            <p><span className="font-medium">Alex Student:</span> student@demo.ailab.edu <span className="text-slate-400">/</span> student123</p>
           </div>
         </div>
       </div>
