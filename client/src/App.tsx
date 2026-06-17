@@ -22,6 +22,7 @@ import TurtlePath from "./games/turtle/TurtlePath";
 import WeatherApp from "./games/weather/App";
 import FeedPuppy from "./games/puppy/FeedPuppy";
 import ColourMagic from "./games/color/ColourMagic";
+import BeeFlowerPath from "./games/bee/BeeFlowerPath";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             <Route path="/games/turtle" element={<TurtlePath />} />
             <Route path="/games/puppy" element={<FeedPuppy />} />
             <Route path="/games/color" element={<ColourMagic />} />
+            <Route path="/games/bee" element={<BeeFlowerPath />} />
             <Route path="/sandbox" element={<Dashboard />} />
             <Route path="/activities" element={<Activities />} />
             <Route path="/projects" element={<Projects />} />

@@ -13,6 +13,7 @@ export default function GameHub() {
   const [turtleLevel, setTurtleLevel] = useState(1);
   const [puppyLevel, setPuppyLevel] = useState(1);
   const [colorLevel, setColorLevel] = useState(1);
+  const [beeLevel, setBeeLevel] = useState(1);
   
   useEffect(() => {
     const loadStats = async () => {
@@ -63,6 +64,15 @@ export default function GameHub() {
         const progress = colorRes.data.progress_data;
         if (progress && typeof progress.maxUnlockedLevel === "number") {
           setColorLevel(progress.maxUnlockedLevel + 1);
+        }
+      } catch {}
+
+      // 6. Bee Flower Path (backend)
+      try {
+        const beeRes = await gamesAPI.getProgress("bee_flower_path");
+        const progress = beeRes.data.progress_data;
+        if (progress && typeof progress.maxUnlockedLevel === "number") {
+          setBeeLevel(progress.maxUnlockedLevel + 1);
         }
       } catch {}
     };
@@ -119,6 +129,16 @@ export default function GameHub() {
       badge: "Color Physics",
       color: "from-purple-500 to-pink-400 border-purple-500/20 shadow-purple-500/10",
       stats: `Level ${Math.min(colorLevel, 10)} / 10 | Master Alchemist`
+    },
+    {
+      id: "bee",
+      title: "Bee Flower Path",
+      path: "/games/bee",
+      emoji: "🐝",
+      description: "Draw a flight path or program command blocks to guide the cute bee to the flowers while navigating obstacles, gates, wind, and rain!",
+      badge: "Pathfinding & Logic",
+      color: "from-yellow-400 to-amber-500 border-yellow-500/20 shadow-yellow-500/10",
+      stats: `Level ${Math.min(beeLevel, 10)} / 10 | Buzzing Programmer`
     }
   ];
 
