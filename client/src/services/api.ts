@@ -58,6 +58,7 @@ export const gamesAPI = {
   getProgress: (gameId: string) => api.get(`/games/progress/${gameId}`),
   saveProgress: (gameId: string, progressData: Record<string, unknown>) =>
     api.post(`/games/progress/${gameId}`, { progress_data: progressData }),
+  getAllProgress: () => api.get("/games/progress"),
 };
 
 export const dashboardAPI = {

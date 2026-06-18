@@ -440,6 +440,12 @@ async def toggle_auth_enforcement(req: AuthEnforcementRequest):
 async def get_enforcement_status():
     return {"enforce_authentication": ENFORCE_AUTHENTICATION}
 
+@app.get("/api/v1/games/progress")
+async def get_all_game_progress(current_user: dict = Depends(get_current_user)):
+    with get_db() as db:
+        rows = db.execute("SELECT game_id, progress_data FROM game_progress WHERE user_id = ?", (current_user["id"],)).fetchall()
+    return {r["game_id"]: json.loads(r["progress_data"]) for r in rows}
+
 @app.get("/api/v1/games/progress/{game_id}")
 async def get_game_progress(game_id: str, current_user: dict = Depends(get_current_user)):
     with get_db() as db:

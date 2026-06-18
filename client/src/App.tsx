@@ -23,6 +23,7 @@ import WeatherApp from "./games/weather/App";
 import FeedPuppy from "./games/puppy/FeedPuppy";
 import ColourMagic from "./games/color/ColourMagic";
 import BeeFlowerPath from "./games/bee/BeeFlowerPath";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<GameHub />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/games/weather" element={<WeatherApp />} />
             <Route path="/games/train" element={<TrainBuilder />} />
             <Route path="/games/turtle" element={<TurtlePath />} />

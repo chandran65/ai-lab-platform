@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles, Trophy, Play, Star } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Sparkles, Trophy, Play, Star, BrainCircuit, ArrowRight } from "lucide-react";
 import { gamesAPI } from "../services/api";
+import { evaluateSkills, getSkillRatings } from "../lib/skillsEngine";
 
 export default function GameHub() {
   const navigate = useNavigate();
@@ -14,10 +15,11 @@ export default function GameHub() {
   const [puppyLevel, setPuppyLevel] = useState(1);
   const [colorLevel, setColorLevel] = useState(1);
   const [beeLevel, setBeeLevel] = useState(1);
+  const [allProgress, setAllProgress] = useState<Record<string, any>>({});
   
   useEffect(() => {
     const loadStats = async () => {
-      // 1. Weather Adventure (localStorage)
+      // 1. Weather Adventure (localStorage backup)
       try {
         const weatherData = localStorage.getItem("weather-adventure-progress");
         if (weatherData) {
@@ -27,54 +29,53 @@ export default function GameHub() {
         }
       } catch {}
 
-      // 2. Choo Choo Train Builder (backend/localStorage)
+      // Load all game progress from database
       try {
-        const trainRes = await gamesAPI.getProgress("train_builder");
-        const progress = trainRes.data.progress_data;
-        if (progress && typeof progress.stars === "number") {
-          setTrainStars(progress.stars);
+        const res = await gamesAPI.getAllProgress();
+        const progress = res.data || {};
+        setAllProgress(progress);
+
+        // Weather
+        const wData = progress["weather_adventure"];
+        if (wData) {
+          if (wData.level) setWeatherLevel(wData.level);
+          if (wData.coins) setWeatherCoins(wData.coins);
+        }
+
+        // Choo Choo Train
+        const trainData = progress["train_builder"];
+        if (trainData) {
+          if (typeof trainData.stars === "number") setTrainStars(trainData.stars);
         } else {
           setTrainStars(Number(localStorage.getItem("train_stars") || "0"));
         }
-      } catch {
-        setTrainStars(Number(localStorage.getItem("train_stars") || "0"));
+
+        // Turtle Path
+        const turtleData = progress["turtle_path"];
+        if (turtleData && typeof turtleData.maxUnlockedLevel === "number") {
+          setTurtleLevel(turtleData.maxUnlockedLevel + 1);
+        }
+
+        // Feed Puppy
+        const puppyData = progress["feed_puppy"];
+        if (puppyData && typeof puppyData.maxUnlockedLevel === "number") {
+          setPuppyLevel(puppyData.maxUnlockedLevel + 1);
+        }
+
+        // Colour Magic
+        const colorData = progress["colour_magic"];
+        if (colorData && typeof colorData.maxUnlockedLevel === "number") {
+          setColorLevel(colorData.maxUnlockedLevel + 1);
+        }
+
+        // Bee Flower Path
+        const beeData = progress["bee_flower_path"];
+        if (beeData && typeof beeData.maxUnlockedLevel === "number") {
+          setBeeLevel(beeData.maxUnlockedLevel + 1);
+        }
+      } catch (err) {
+        console.error("Failed to load overall stats:", err);
       }
-
-      // 3. Turtle Path (backend)
-      try {
-        const turtleRes = await gamesAPI.getProgress("turtle_path");
-        const progress = turtleRes.data.progress_data;
-        if (progress && typeof progress.maxUnlockedLevel === "number") {
-          setTurtleLevel(progress.maxUnlockedLevel + 1);
-        }
-      } catch {}
-
-      // 4. Feed the Puppy (backend)
-      try {
-        const puppyRes = await gamesAPI.getProgress("feed_puppy");
-        const progress = puppyRes.data.progress_data;
-        if (progress && typeof progress.maxUnlockedLevel === "number") {
-          setPuppyLevel(progress.maxUnlockedLevel + 1);
-        }
-      } catch {}
-
-      // 5. Colour Magic (backend)
-      try {
-        const colorRes = await gamesAPI.getProgress("colour_magic");
-        const progress = colorRes.data.progress_data;
-        if (progress && typeof progress.maxUnlockedLevel === "number") {
-          setColorLevel(progress.maxUnlockedLevel + 1);
-        }
-      } catch {}
-
-      // 6. Bee Flower Path (backend)
-      try {
-        const beeRes = await gamesAPI.getProgress("bee_flower_path");
-        const progress = beeRes.data.progress_data;
-        if (progress && typeof progress.maxUnlockedLevel === "number") {
-          setBeeLevel(progress.maxUnlockedLevel + 1);
-        }
-      } catch {}
     };
     loadStats();
   }, []);
@@ -174,6 +175,56 @@ export default function GameHub() {
           </div>
         </div>
       </div>
+
+      {/* 🧠 Cognitive Capabilities Widget */}
+      {Object.keys(allProgress).length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-200/85 shadow-md p-6 md:p-8 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <BrainCircuit className="w-8 h-8 text-indigo-600 animate-pulse" />
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Your Capabilities Dashboard</h2>
+                <p className="text-xs font-semibold text-slate-500">Real-time evaluation of your gameplay problem-solving skills.</p>
+              </div>
+            </div>
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-wider self-start md:self-center"
+            >
+              View Badges & Details <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Progress Bars */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+            {getSkillRatings(evaluateSkills(allProgress)).map((skill) => (
+              <div key={skill.id} className="space-y-2.5 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-700">{skill.name}</span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600">
+                    {skill.score}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${
+                      skill.id === "sharp" ? "from-red-400 to-rose-500" :
+                      skill.id === "thinker" ? "from-indigo-400 to-indigo-600" :
+                      skill.id === "patient" ? "from-emerald-400 to-green-500" :
+                      skill.id === "consistent" ? "from-amber-400 to-yellow-500" :
+                      "from-purple-400 to-fuchsia-600"
+                    }`}
+                    style={{ width: `${skill.score}%` }}
+                  />
+                </div>
+                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide">
+                  {skill.level}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grid of Interactive Games */}
       <div>

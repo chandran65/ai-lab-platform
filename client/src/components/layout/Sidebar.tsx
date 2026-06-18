@@ -2,11 +2,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard, Sparkles, FolderOpen, Code, FileCode,
-  GraduationCap, Shield, LogOut, Brain, Cpu, Gamepad2
+  GraduationCap, Shield, LogOut, Brain, Cpu, Gamepad2, Award
 } from "lucide-react";
 
 const studentMenu = [
   { path: "/dashboard", label: "Game Hub", icon: LayoutDashboard },
+  { path: "/profile", label: "My Profile & Badges", icon: Award },
   { path: "/games/weather", label: "Weather Adventure", icon: Sparkles },
   { path: "/games/train", label: "Choo Choo Train", icon: Gamepad2 },
   { path: "/games/turtle", label: "Turtle Path 3D", icon: Brain },
