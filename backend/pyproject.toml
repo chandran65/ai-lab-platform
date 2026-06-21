@@ -1,20 +1,26 @@
 [tool.poetry]
-name = "app"
-version = "0.1.0"
-description = ""
-authors = ["Devin AI <158243242+devin-ai-integration[bot]@users.noreply.github.com>"]
+name = "mindora-backend"
+version = "2.0.0"
+description = "Mindora AI & Computational Thinking Platform for K-12 Students"
+authors = ["Mindora Team"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+# Web framework
 fastapi = {extras = ["standard"], version = "^0.128.8"}
-
+# Auth
 python-jose = {extras = ["cryptography"], version = "*"}
 passlib = {extras = ["bcrypt"], version = "*"}
 python-multipart = "*"
 pydantic-settings = "*"
 bcrypt = "4.0.1"
-
+# Database
+sqlalchemy = "^2.0"
+alembic = "^1.13"
+aiosqlite = "^0.20"
+# Production DB driver (optional, for PostgreSQL)
+asyncpg = "^0.29"
 
 [build-system]
 requires = ["poetry-core"]

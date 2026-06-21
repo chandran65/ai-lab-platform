@@ -36,12 +36,24 @@ export default function TeacherDashboard() {
 
   async function loadData() {
     try {
-      const [s, c] = await Promise.all([
-        dashboardAPI.getTeacherDashboard(),
+      const [overview, classList] = await Promise.all([
+        dashboardAPI.getTeacherOverview(),
         classesAPI.list(),
       ]);
-      setStats(s.data);
-      setClasses(c.data);
+      // Map teacher overview to stats format
+      const o = overview.data;
+      setStats({
+        total_students: o?.total_students ?? 0,
+        total_classes: o?.total_classes ?? 0,
+        total_projects: 0,
+        total_models: 0,
+        class_stats: (o?.classes ?? []).map((c: any) => ({
+          name: c.name,
+          students: c.student_count ?? 0,
+          projects: 0,
+        })),
+      });
+      setClasses("classes" in classList.data ? classList.data.classes : classList.data);
     } catch {
       // ignore
     } finally {

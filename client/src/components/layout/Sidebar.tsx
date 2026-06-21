@@ -2,11 +2,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard, Sparkles, FolderOpen, Code, FileCode,
-  GraduationCap, Shield, LogOut, Brain, Cpu, Gamepad2, Award
+  GraduationCap, Shield, LogOut, Brain, Cpu, Gamepad2, Award, Globe
 } from "lucide-react";
 
 const studentMenu = [
   { path: "/dashboard", label: "Game Hub", icon: LayoutDashboard },
+  { path: "/worlds", label: "Learning Worlds", icon: Globe },
   { path: "/profile", label: "My Profile & Badges", icon: Award },
   { path: "/games/weather", label: "Weather Adventure", icon: Sparkles },
   { path: "/games/train", label: "Choo Choo Train", icon: Gamepad2 },
@@ -35,6 +36,7 @@ export default function Sidebar() {
 
   const menu = [
     ...studentMenu,
+    { path: "/certificates", label: "Certificates", icon: Award },
   ];
 
   const devMenu = [

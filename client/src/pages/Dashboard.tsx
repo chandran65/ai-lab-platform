@@ -2,44 +2,36 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { dashboardAPI } from "../services/api";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FolderOpen, Sparkles, Trophy, TerminalSquare, BookOpenText, Puzzle, LayoutGrid, BrainCircuit, Box, Palette, XCircle, GraduationCap, Users } from "lucide-react";
-
-interface Stats {
-  projects_count: number;
-  activities_completed: number;
-  models_trained: number;
-  hours_learned: number;
-  average_accuracy: number;
-  recent_activity: { name: string; count: number }[];
-}
-
-interface Project {
-  id: string;
-  name: string;
-  project_type: string;
-  status: string;
-  updated_at: string;
-}
-
-const COLORS = ["#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#ec4899"];
-const typeLabels: Record<string, string> = {
-  image_classifier: "Image Classifier",
-  text_classifier: "Text Classifier",
-  object_detection: "Object Detection",
-  audio_classifier: "Audio Classifier",
-};
+import { Sparkles, TerminalSquare, BookOpenText, Puzzle, LayoutGrid, BrainCircuit, Box, Palette, XCircle, GraduationCap } from "lucide-react";
+import LeaderboardPanel from "../features/gamification/components/LeaderboardPanel";
+import SkillRadarChart from "../features/gamification/components/SkillRadarChart";
+import SkillHistoryChart from "../features/gamification/components/SkillHistoryChart";
+import { useTeacherOverview } from "../features/teacher/hooks/useTeacherAnalytics";
+import TeacherOverview from "../features/teacher/components/TeacherOverview";
+import SkillHeatmap from "../features/teacher/components/SkillHeatmap";
+import StudentProgressTable from "../features/teacher/components/StudentProgressTable";
+import PerformanceTrends from "../features/teacher/components/PerformanceTrends";
+import LearningGaps from "../features/teacher/components/LearningGaps";
+import AIReadiness from "../features/teacher/components/AIReadiness";
+import ScheduleReport from "../features/teacher/components/ScheduleReport";
+import { usePdfExport } from "../features/teacher/hooks/usePdfExport";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [, setStats] = useState<any>(null);
+  const [, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"student" | "teacher">("student");
 
   // Visual Assistant State
   const [showHelper, setShowHelper] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<string | undefined>(undefined);
+  const { generatePdf, exporting } = usePdfExport();
+
+  // Get class list from overview for the filter
+  const { data: overviewData } = useTeacherOverview();
+  const classes = overviewData?.classes ?? [];
 
   useEffect(() => {
     async function load() {
@@ -64,15 +56,6 @@ export default function Dashboard() {
         return () => clearTimeout(timer);
     }
   }, [viewMode]);
-
-  const chartData = stats?.recent_activity || [];
-  const pieData = projects.reduce((acc, p) => {
-    const type = typeLabels[p.project_type] || p.project_type;
-    const existing = acc.find((d) => d.name === type);
-    if (existing) existing.value++;
-    else acc.push({ name: type, value: 1 });
-    return acc;
-  }, [] as { name: string; value: number }[]);
 
   if (loading) {
     return (
@@ -214,6 +197,21 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* Gamification Section — Leaderboard & Skill Progression */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <LeaderboardPanel />
+                    </div>
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <SkillRadarChart />
+                    </div>
+                </div>
+
+                {/* Skill History Timeline — full width */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mt-8">
+                    <SkillHistoryChart />
+                </div>
+
             </div>
 
             {/* AI Student Assistant Overlay */}
@@ -241,84 +239,104 @@ export default function Dashboard() {
             
         </div>
       ) : (
-        /* --- TEACHER ANALYTICS DASHBOARD --- */
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        /* --- TEACHER ANALYTICS DASHBOARD V2 --- */
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-2xl font-black text-slate-900">
                     Educator Global View
                 </h1>
-                <p className="text-slate-500 mt-1">Review organizational metrics, AI adoption, and student progress.</p>
+                <p className="text-slate-500 mt-1 font-medium">Comprehensive analytics across all your classes.</p>
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                { label: "Total Students", value: 142, icon: Users, color: "bg-blue-50 text-blue-600" },
-                { label: "Projects Created", value: stats?.projects_count || 0, icon: FolderOpen, color: "bg-indigo-50 text-indigo-600" },
-                { label: "Models Trained", value: stats?.models_trained || 0, icon: Trophy, color: "bg-amber-50 text-amber-600" },
-                { label: "Avg Class Accuracy", value: `${(stats?.average_accuracy || 0.85) * 100}%`, icon: Sparkles, color: "bg-emerald-50 text-emerald-600" },
-                ].map((stat) => {
-                const Icon = stat.icon;
-                return (
-                    <div key={stat.label} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                        <div>
-                        <p className="text-sm text-slate-500 font-bold">{stat.label}</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
-                        </div>
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                        <Icon className="h-6 w-6" />
-                        </div>
-                    </div>
-                    </div>
-                );
-                })}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-black text-slate-900">Activity Overview</h2>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold">Past 30 Days</span>
-                </div>
-                {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                        <Bar dataKey="count" fill="#5e2d8b" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="h-64 flex flex-col items-center justify-center text-slate-400">
-                    <BarChart className="w-12 h-12 mb-3 text-slate-300" />
-                    <p className="font-medium">No activity data collected yet.</p>
-                    </div>
-                )}
-                </div>
-
-                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                <h2 className="text-lg font-black text-slate-900 mb-6">ML Model Utilization</h2>
-                {pieData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} innerRadius={60} dataKey="value" label={{fill: '#475569', fontSize: 12, fontWeight: 600}}>
-                        {pieData.map((_, i) => (
-                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                <div className="flex items-center gap-3">
+                    {/* Class filter dropdown */}
+                    <div className="relative">
+                    <select
+                        value={selectedClassId ?? ""}
+                        onChange={(e) => setSelectedClassId(e.target.value || undefined)}
+                        className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-8 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300 cursor-pointer"
+                    >
+                        <option value="">All Classes</option>
+                        {classes.map((c) => (
+                        <option key={c.id} value={c.id}>
+                            {c.name} (Grade {c.grade_level})
+                        </option>
                         ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                    </PieChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="h-64 flex items-center justify-center text-slate-400">
-                    <p className="font-medium">Create projects to view class metrics.</p>
+                    </select>
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                     </div>
-                )}
+                    <button
+                    onClick={generatePdf}
+                    disabled={exporting}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white text-sm font-bold rounded-xl shadow-sm transition-all"
+                    >
+                    {exporting ? (
+                    <>
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Generating...
+                    </>
+                    ) : (
+                    <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                    </>
+                    )}
+                    </button>
                 </div>
+            </div>
+
+            {/* Section 1: Class Overview */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <TeacherOverview />
+            </div>
+
+            {/* Section 2: Student Progress Table */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <StudentProgressTable classId={selectedClassId} />
+            </div>
+
+            {/* Section 3: Performance Trends */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <PerformanceTrends classId={selectedClassId} />
+            </div>
+
+            {/* Section 4: Two-column (Skill Heatmap + Learning Gaps) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <SkillHeatmap classId={selectedClassId} />
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <LearningGaps classId={selectedClassId} />
+                </div>
+            </div>
+
+            {/* Section 5: Two-column (AI Readiness + Skill Progression) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <AIReadiness classId={selectedClassId} />
+                </div>
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <SkillRadarChart />
+                </div>
+            </div>
+
+            {/* Section 6: Skill History Timeline */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <SkillHistoryChart />
+            </div>
+
+            {/* Section 7: Scheduled Reports */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <ScheduleReport classId={selectedClassId} classes={classes} />
             </div>
 
         </div>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
-  PlayCircle, Trash2, RotateCcw, Volume2, VolumeX, ArrowLeft, ArrowUp, ArrowDown,
-  ArrowRight, Sparkles, Sun, Moon, HelpCircle, Award, BarChart2, CheckCircle2, Navigation, Droplets, Zap, Terminal
+  PlayCircle, RotateCcw, Volume2, VolumeX, ArrowLeft,
+  Sun, Moon, HelpCircle, Award, BarChart2, CheckCircle2, Navigation, Droplets, Zap, Terminal, Sparkles
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { gamesAPI } from "../../services/api";
@@ -464,7 +464,7 @@ const solveBFS = (level: LevelData): { path: [number, number][]; moves: string[]
 export default function BeeFlowerPath() {
   const [currentLevel, setCurrentLevel] = useState<number>(0);
   const [playerPos, setPlayerPos] = useState<[number, number]>([0, 0]);
-  const [steps, setSteps] = useState<number>(0);
+  const [, setSteps] = useState<number>(0);
   const [moveQueue, setMoveQueue] = useState<string[]>([]);
   const [executing, setExecuting] = useState<boolean>(false);
   const [soundOn, setSoundOn] = useState<boolean>(() => {
@@ -934,7 +934,7 @@ export default function BeeFlowerPath() {
     }, intervalTime);
   };
 
-  const handleSuccess = (userSteps: number, honeyJarsCollected: number, finalEnergy: number) => {
+  const handleSuccess = (userSteps: number, honeyJarsCollected: number, _finalEnergy: number) => {
     setTotalSuccesses(p => p + 1);
     playBeeSynth("win", soundOn);
     setGameWon(true);

@@ -172,7 +172,7 @@ export function getSkillRatings(scores: Record<string, number>): SkillRating[] {
 }
 
 // Function to get badges list
-export function getBadges(scores: Record<string, number>, allProgress: Record<string, any>): Badge[] {
+export function getBadges(_scores: Record<string, number>, allProgress: Record<string, any>): Badge[] {
   const bee = allProgress["bee_flower_path"] || {};
   const color = allProgress["colour_magic"] || {};
   const puppy = allProgress["feed_puppy"] || {};

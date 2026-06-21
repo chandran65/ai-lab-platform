@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { gamesAPI } from "../services/api";
-import { evaluateSkills, getSkillRatings, getBadges, SkillRating, Badge } from "../lib/skillsEngine";
-import { Award, User, Calendar, Mail, Compass, Star, CheckCircle, Lock, HelpCircle, Trophy } from "lucide-react";
+import { evaluateSkills, getSkillRatings, getBadges } from "../lib/skillsEngine";
+import { Award, User, Calendar, Mail, Compass, CheckCircle, Lock, Trophy } from "lucide-react";
 
 export default function Profile() {
   const { user } = useAuth();
   const [progress, setProgress] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"capabilities" | "badges">("capabilities");
+  // const [activeTab, setActiveTab] = useState<"capabilities" | "badges">("capabilities");
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Profile() {
   // Compute overall stats
   const unlockedBadgesCount = badgesList.filter((b) => b.unlocked).length;
   const trainStars = progress["train_builder"]?.stars || 0;
-  const weatherCoins = progress["weather_adventure"]?.coins || 0;
+  // const weatherCoins = progress["weather_adventure"]?.coins || 0;
   
   // Find highest scoring skill
   const topSkill = [...skillRatings].sort((a, b) => b.score - a.score)[0];

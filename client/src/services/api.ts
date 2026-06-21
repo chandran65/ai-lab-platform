@@ -64,7 +64,14 @@ export const gamesAPI = {
 export const dashboardAPI = {
   getStats: () => api.get("/dashboard/stats"),
   getRecentProjects: () => api.get("/dashboard/recent-projects"),
-  getTeacherDashboard: () => api.get("/dashboard/teacher"),
+  getTeacherOverview: () => api.get("/dashboard/teacher"),
+  getTeacherStudents: (classId?: string) => api.get("/dashboard/teacher/students", { params: classId ? { class_id: classId } : {} }),
+  getTeacherSkillHeatmap: (classId?: string) => api.get("/dashboard/teacher/skills", { params: classId ? { class_id: classId } : {} }),
+  getTeacherPerformance: (classId?: string) => api.get("/dashboard/teacher/performance", { params: classId ? { class_id: classId } : {} }),
+  getTeacherGaps: (classId?: string) => api.get("/dashboard/teacher/gaps", { params: classId ? { class_id: classId } : {} }),
+  getTeacherReadiness: (classId?: string) => api.get("/dashboard/teacher/readiness", { params: classId ? { class_id: classId } : {} }),
+  getTeacherRecommendations: (classId?: string) => api.get("/dashboard/teacher/recommendations", { params: classId ? { class_id: classId } : {} }),
+  getTeacherStudentDetail: (studentId: string) => api.get(`/dashboard/teacher/students/${studentId}`),
 };
 
 export const projectsAPI = {
@@ -116,6 +123,15 @@ export const activitiesAPI = {
   launch: (id: string) => api.post(`/activities/${id}/launch`),
 };
 
+export const reportsAPI = {
+  getSubscriptions: () => api.get("/reports/subscriptions"),
+  createSubscription: (data: { frequency: string; class_id?: string; day_of_week?: number; day_of_month?: number }) =>
+    api.post("/reports/subscriptions", data),
+  deleteSubscription: (id: string) => api.delete(`/reports/subscriptions/${id}`),
+  triggerReport: (classId?: string) =>
+    api.post("/reports/trigger", null, { params: classId ? { class_id: classId } : {} }),
+};
+
 export const classesAPI = {
   list: () => api.get("/classes"),
   create: (data: { name: string; grade_level: number; description?: string }) =>
@@ -135,6 +151,36 @@ export const adminAPI = {
 export const transpilerAPI = {
   toPython: (blockXml: Record<string, unknown>) => api.post("/transpiler/to-python", blockXml),
   toJavaScript: (blockXml: Record<string, unknown>) => api.post("/transpiler/to-javascript", blockXml),
+};
+
+export const worldsAPI = {
+  list: () => api.get("/worlds"),
+  get: (id: string) => api.get(`/worlds/${id}`),
+  getBySlug: (slug: string) => api.get(`/worlds/slug/${slug}`),
+  getActivities: (worldId: string) => api.get(`/worlds/${worldId}/activities`),
+};
+
+export const certificatesAPI = {
+  list: () => api.get("/certificates"),
+  get: (id: string) => api.get(`/certificates/${id}`),
+  download: (id: string) => api.get(`/certificates/${id}/download`, { responseType: "blob" }),
+  generateWorld: (worldId: string) => api.post(`/certificates/generate/world/${worldId}`),
+  generateSkill: (skillId: string, score: number) =>
+    api.post(`/certificates/generate/skill/${skillId}?score=${score}`),
+  generateCourse: (completedWorlds: string[]) =>
+    api.post("/certificates/generate/course", completedWorlds),
+};
+
+export const gamificationAPI = {
+  completeExperiment: (worldId: string, experimentId: string, data?: { xp_earned?: number; time_spent_ms?: number; score?: number }) =>
+    api.post(`/gamification/worlds/${worldId}/experiments/${experimentId}/complete`, data ?? {}),
+  getProgress: () => api.get("/gamification/progress"),
+  getWorldProgress: (worldId: string) => api.get(`/gamification/worlds/${worldId}/progress`),
+  getBadges: () => api.get("/gamification/badges"),
+  getAchievements: () => api.get("/gamification/achievements"),
+  getSkills: () => api.get("/gamification/skills"),
+  getSkillHistory: () => api.get("/gamification/skills/history"),
+  getLeaderboard: () => api.get("/gamification/leaderboard"),
 };
 
 export default api;
