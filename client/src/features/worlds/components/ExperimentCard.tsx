@@ -57,7 +57,10 @@ export default function ExperimentCard({
           setJustCompleted(true);
           setTimeout(() => setJustCompleted(false), 2000);
 
+<<<<<<< Updated upstream
           // Check for non-XP rewards and bubble up for celebration
+=======
+>>>>>>> Stashed changes
           const hasSpecialRewards = result.rewards?.some(
             (r) => r.type !== "xp",
           );
@@ -94,7 +97,10 @@ export default function ExperimentCard({
       }`}
     >
       <div className="p-5 flex items-start gap-4">
+<<<<<<< Updated upstream
         {/* Emoji icon */}
+=======
+>>>>>>> Stashed changes
         <div
           className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl shadow-sm border transition-all ${
             showCompleted
@@ -115,7 +121,10 @@ export default function ExperimentCard({
           )}
         </div>
 
+<<<<<<< Updated upstream
         {/* Content */}
+=======
+>>>>>>> Stashed changes
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3
@@ -154,7 +163,10 @@ export default function ExperimentCard({
             {experiment.description}
           </p>
 
+<<<<<<< Updated upstream
           {/* Meta row */}
+=======
+>>>>>>> Stashed changes
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400">
               <Layers className="w-3 h-3" /> {experiment.levels} Levels
@@ -163,7 +175,10 @@ export default function ExperimentCard({
               <Clock className="w-3 h-3" /> {experiment.duration}
             </span>
 
+<<<<<<< Updated upstream
             {/* Skills */}
+=======
+>>>>>>> Stashed changes
             <div className="flex flex-wrap gap-1">
               {experiment.skills.map((skill) => (
                 <span
@@ -179,7 +194,10 @@ export default function ExperimentCard({
               ))}
             </div>
 
+<<<<<<< Updated upstream
             {/* Right-side action buttons */}
+=======
+>>>>>>> Stashed changes
             {showCompleted ? (
               <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
                 <CheckCircle2 className="w-3 h-3" /> Done
@@ -197,7 +215,10 @@ export default function ExperimentCard({
               </button>
             )}
 
+<<<<<<< Updated upstream
             {/* Launch CTA — hidden when completed */}
+=======
+>>>>>>> Stashed changes
             {!showCompleted && experiment.gameLink && (
               <button
                 onClick={(e) => {

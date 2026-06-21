@@ -143,11 +143,58 @@ def init_db():
             updated_at TEXT DEFAULT (datetime('now')),
             PRIMARY KEY (user_id, game_id)
         );
+        CREATE TABLE IF NOT EXISTS worlds (
+            id TEXT PRIMARY KEY, slug TEXT UNIQUE NOT NULL, title TEXT NOT NULL,
+            subtitle TEXT, description TEXT, age_range TEXT, min_age INTEGER DEFAULT 4,
+            max_age INTEGER DEFAULT 7, mascot_name TEXT, mascot_emoji TEXT DEFAULT '🐰',
+            mascot_personality TEXT, theme TEXT, gradient TEXT, accent_color TEXT,
+            w_order INTEGER DEFAULT 0, skills TEXT DEFAULT '[]',
+            completion_reward TEXT DEFAULT '⭐ Certificate', unlock_requirement TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS experiments (
+            id TEXT PRIMARY KEY, world_slug TEXT NOT NULL REFERENCES worlds(slug),
+            title TEXT NOT NULL, description TEXT, emoji TEXT DEFAULT '🔬',
+            skills TEXT DEFAULT '[]', levels INTEGER DEFAULT 3, duration TEXT DEFAULT '15 min',
+            game_link TEXT, is_new INTEGER DEFAULT 0, e_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS user_progress (
+            user_id TEXT PRIMARY KEY REFERENCES users(id),
+            total_xp INTEGER DEFAULT 0, level INTEGER DEFAULT 1,
+            coins INTEGER DEFAULT 0, streak INTEGER DEFAULT 0,
+            completed_experiments TEXT DEFAULT '[]',
+            unlocked_worlds TEXT DEFAULT '[]',
+            world_progress TEXT DEFAULT '{}',
+            earned_badges TEXT DEFAULT '[]',
+            earned_achievements TEXT DEFAULT '[]',
+            updated_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS badges (
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+            icon TEXT DEFAULT '🏅', skill TEXT, stage INTEGER DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS achievements (
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+            icon TEXT DEFAULT '🏆', category TEXT DEFAULT 'general'
+        );
+        CREATE TABLE IF NOT EXISTS skills (
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+            category TEXT DEFAULT 'general'
+        );
+        CREATE TABLE IF NOT EXISTS skill_progress (
+            user_id TEXT REFERENCES users(id),
+            skill_id TEXT REFERENCES skills(id),
+            score INTEGER DEFAULT 0, level TEXT DEFAULT 'beginner',
+            milestones TEXT DEFAULT '[]', updated_at TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (user_id, skill_id)
+        );
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
         CREATE INDEX IF NOT EXISTS idx_datasets_project ON datasets(project_id);
         CREATE INDEX IF NOT EXISTS idx_models_project ON models(project_id);
         CREATE INDEX IF NOT EXISTS idx_training_jobs_user ON training_jobs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_experiments_world ON experiments(world_slug);
         """)
         _seed(db)
 

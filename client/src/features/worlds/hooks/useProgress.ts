@@ -5,14 +5,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { gamificationAPI } from "../../../services/api";
 
+<<<<<<< Updated upstream
 // ── Types ────────────────────────────────────────────────────────
 
+=======
+>>>>>>> Stashed changes
 export interface UserProgress {
   completed_experiments: string[];
   earned_badges: string[];
   earned_achievements: string[];
   total_xp: number;
+<<<<<<< Updated upstream
   world_progress: Record<string, number>; // world_id -> completion %
+=======
+  world_progress: Record<string, number>;
+>>>>>>> Stashed changes
   unlocked_worlds: string[];
 }
 
@@ -64,7 +71,11 @@ export interface SkillRating {
   name: string;
   score: number;
   level: string;
+<<<<<<< Updated upstream
   milestones: number[]; // threshold values earned (25, 50, 75, 100)
+=======
+  milestones: number[];
+>>>>>>> Stashed changes
 }
 
 export interface SkillHistoryEntry {
@@ -81,8 +92,11 @@ export interface LeaderboardEntry {
   experiments_completed: number;
 }
 
+<<<<<<< Updated upstream
 // ── Query keys ───────────────────────────────────────────────────
 
+=======
+>>>>>>> Stashed changes
 export const progressKeys = {
   all: ["gamification", "progress"] as const,
   world: (worldId: string) => ["gamification", "world", worldId] as const,
@@ -93,11 +107,14 @@ export const progressKeys = {
   skillHistory: ["gamification", "skillHistory"] as const,
 };
 
+<<<<<<< Updated upstream
 // ── Hooks ────────────────────────────────────────────────────────
 
 /**
  * Fetch the user's full progress across all worlds.
  */
+=======
+>>>>>>> Stashed changes
 export function useProgress() {
   return useQuery<UserProgress>({
     queryKey: progressKeys.all,
@@ -105,14 +122,21 @@ export function useProgress() {
       const res = await gamificationAPI.getProgress();
       return res.data;
     },
+<<<<<<< Updated upstream
     staleTime: 2 * 60 * 1000, // 2 minutes — progress changes frequently
+=======
+    staleTime: 2 * 60 * 1000,
+>>>>>>> Stashed changes
     retry: 2,
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch the user's progress in a specific world.
  */
+=======
+>>>>>>> Stashed changes
 export function useWorldProgress(worldId: string | undefined) {
   return useQuery<WorldProgress>({
     queryKey: progressKeys.world(worldId ?? ""),
@@ -127,9 +151,12 @@ export function useWorldProgress(worldId: string | undefined) {
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch the user's earned badges.
  */
+=======
+>>>>>>> Stashed changes
 export function useBadges() {
   return useQuery<Badge[]>({
     queryKey: progressKeys.badges,
@@ -142,9 +169,12 @@ export function useBadges() {
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch the user's earned achievements.
  */
+=======
+>>>>>>> Stashed changes
 export function useAchievements() {
   return useQuery<Achievement[]>({
     queryKey: progressKeys.achievements,
@@ -157,9 +187,12 @@ export function useAchievements() {
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch the user's skill ratings.
  */
+=======
+>>>>>>> Stashed changes
 export function useSkills() {
   return useQuery<SkillRating[]>({
     queryKey: progressKeys.skills,
@@ -172,9 +205,12 @@ export function useSkills() {
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch skill score history (time series data).
  */
+=======
+>>>>>>> Stashed changes
 export function useSkillHistory() {
   return useQuery<SkillHistoryEntry[]>({
     queryKey: progressKeys.skillHistory,
@@ -187,9 +223,12 @@ export function useSkillHistory() {
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Fetch the global leaderboard.
  */
+=======
+>>>>>>> Stashed changes
 export function useLeaderboard() {
   return useQuery<LeaderboardEntry[]>({
     queryKey: progressKeys.leaderboard,
@@ -197,15 +236,22 @@ export function useLeaderboard() {
       const res = await gamificationAPI.getLeaderboard();
       return res.data ?? [];
     },
+<<<<<<< Updated upstream
     staleTime: 60 * 1000, // 1 minute — leaderboard can change frequently
+=======
+    staleTime: 60 * 1000,
+>>>>>>> Stashed changes
     retry: 2,
   });
 }
 
+<<<<<<< Updated upstream
 /**
  * Mark an experiment as completed.
  * On success, invalidates related queries so UI updates automatically.
  */
+=======
+>>>>>>> Stashed changes
 export function useCompleteExperiment() {
   const queryClient = useQueryClient();
 
@@ -223,13 +269,20 @@ export function useCompleteExperiment() {
       return res.data;
     },
     onSuccess: (_data, variables) => {
+<<<<<<< Updated upstream
       // Invalidate progress for the world and overall
+=======
+>>>>>>> Stashed changes
       queryClient.invalidateQueries({ queryKey: progressKeys.all });
       queryClient.invalidateQueries({ queryKey: progressKeys.world(variables.worldId) });
       queryClient.invalidateQueries({ queryKey: progressKeys.badges });
       queryClient.invalidateQueries({ queryKey: progressKeys.achievements });
       queryClient.invalidateQueries({ queryKey: progressKeys.skills });
+<<<<<<< Updated upstream
       queryClient.invalidateQueries({ queryKey: ["worlds"] }); // worlds might show completion state
+=======
+      queryClient.invalidateQueries({ queryKey: ["worlds"] });
+>>>>>>> Stashed changes
     },
   });
 }

@@ -1,6 +1,9 @@
 /**
  * CelebrationModal — Full-screen confetti + reward display when badges/achievements are earned.
+<<<<<<< Updated upstream
  * Shows animated award cards for each non-XP reward from experiment completion.
+=======
+>>>>>>> Stashed changes
  */
 
 import { useEffect, useRef } from "react";
@@ -8,10 +11,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, MapPin, Zap, Star, ArrowRight } from "lucide-react";
 import confetti from "canvas-confetti";
 
+<<<<<<< Updated upstream
 // ── Types ────────────────────────────────────────────────────────
 
 export interface Reward {
   type: string; // "badge" | "achievement" | "world_unlock" | "xp"
+=======
+export interface Reward {
+  type: string;
+>>>>>>> Stashed changes
   name: string;
   description?: string;
   icon?: string;
@@ -25,8 +33,11 @@ interface CelebrationModalProps {
   onNavigate?: (slug: string) => void;
 }
 
+<<<<<<< Updated upstream
 // ── Reward icon mapping ──────────────────────────────────────────
 
+=======
+>>>>>>> Stashed changes
 function rewardIcon(type: string, emoji?: string): string {
   if (emoji) return emoji;
   switch (type) {
@@ -64,6 +75,7 @@ function rewardLabel(type: string): string {
   }
 }
 
+<<<<<<< Updated upstream
 // ── Confetti burst ───────────────────────────────────────────────
 
 function fireConfetti() {
@@ -107,12 +119,26 @@ function fireConfetti() {
 
 // ── Component ────────────────────────────────────────────────────
 
+=======
+function fireConfetti() {
+  confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ["#f59e0b", "#8b5cf6", "#06b6d4", "#10b981", "#f43f5e"] });
+  setTimeout(() => {
+    confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0, y: 0.5 }, colors: ["#f59e0b", "#8b5cf6", "#10b981"] });
+    confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1, y: 0.5 }, colors: ["#06b6d4", "#f43f5e", "#8b5cf6"] });
+  }, 150);
+  setTimeout(() => {
+    confetti({ particleCount: 40, spread: 120, origin: { y: 0.2 }, shapes: ["star"], colors: ["#fbbf24", "#fcd34d", "#fde68a"] });
+  }, 300);
+}
+
+>>>>>>> Stashed changes
 export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNavigate }: CelebrationModalProps) {
   const hasFired = useRef(false);
 
   useEffect(() => {
     if (!hasFired.current && rewards.length > 0) {
       hasFired.current = true;
+<<<<<<< Updated upstream
       // Fire confetti in sequence
       fireConfetti();
       // Continuous rain for a few seconds
@@ -134,6 +160,17 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
   }, [rewards]);
 
   // Filter to non-XP rewards (badge, achievement, world_unlock)
+=======
+      fireConfetti();
+      const interval = setInterval(() => {
+        confetti({ particleCount: 10, spread: 100, origin: { y: 0 }, colors: ["#f59e0b", "#8b5cf6", "#06b6d4", "#10b981"] });
+      }, 200);
+      const timeout = setTimeout(() => clearInterval(interval), 2500);
+      return () => { clearTimeout(timeout); clearInterval(interval); };
+    }
+  }, [rewards]);
+
+>>>>>>> Stashed changes
   const specialRewards = rewards.filter((r) => r.type !== "xp");
 
   return (
@@ -154,10 +191,14 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
           onClick={(e) => e.stopPropagation()}
           className="relative max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
         >
+<<<<<<< Updated upstream
           {/* Top gradient bar */}
           <div className="h-2 bg-gradient-to-r from-amber-400 via-violet-500 to-cyan-500" />
 
           {/* Header */}
+=======
+          <div className="h-2 bg-gradient-to-r from-amber-400 via-violet-500 to-cyan-500" />
+>>>>>>> Stashed changes
           <div className="text-center pt-8 pb-2 px-8">
             <motion.div
               initial={{ scale: 0, rotate: -20 }}
@@ -168,12 +209,18 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
               <Sparkles className="w-8 h-8 text-amber-500" />
             </motion.div>
             <h2 className="text-2xl font-black text-slate-900">Congratulations!</h2>
+<<<<<<< Updated upstream
             <p className="text-sm font-medium text-slate-500 mt-1">
               You earned some rewards!
             </p>
           </div>
 
           {/* Reward cards */}
+=======
+            <p className="text-sm font-medium text-slate-500 mt-1">You earned some rewards!</p>
+          </div>
+
+>>>>>>> Stashed changes
           <div className="px-8 py-4 space-y-3">
             {specialRewards.map((reward, idx) => (
               <motion.div
@@ -183,7 +230,10 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
                 transition={{ delay: 0.2 + idx * 0.15, type: "spring", stiffness: 150 }}
                 className={`flex items-center gap-4 p-4 rounded-2xl border-2 ${rewardBg(reward.type)} shadow-sm`}
               >
+<<<<<<< Updated upstream
                 {/* Emoji icon */}
+=======
+>>>>>>> Stashed changes
                 <motion.div
                   initial={{ rotate: -180, scale: 0 }}
                   animate={{ rotate: 0, scale: 1 }}
@@ -192,12 +242,16 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
                 >
                   {rewardIcon(reward.type, reward.icon)}
                 </motion.div>
+<<<<<<< Updated upstream
 
                 {/* Details */}
+=======
+>>>>>>> Stashed changes
                 <div className="flex-1 min-w-0">
                   <span className={`inline-block text-[9px] font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r ${rewardColor(reward.type)}`}>
                     {rewardLabel(reward.type)}
                   </span>
+<<<<<<< Updated upstream
                   <h3 className="text-base font-black text-slate-900 mt-0.5">
                     {reward.name}
                   </h3>
@@ -206,6 +260,10 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
                       {reward.description}
                     </p>
                   )}
+=======
+                  <h3 className="text-base font-black text-slate-900 mt-0.5">{reward.name}</h3>
+                  {reward.description && <p className="text-xs font-medium text-slate-500 mt-0.5 line-clamp-2">{reward.description}</p>}
+>>>>>>> Stashed changes
                   {reward.amount && (
                     <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mt-1">
                       <Zap className="w-2.5 h-2.5" /> +{reward.amount} Bonus XP
@@ -215,7 +273,10 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
               </motion.div>
             ))}
 
+<<<<<<< Updated upstream
             {/* World unlock banner — clickable */}
+=======
+>>>>>>> Stashed changes
             {worldUnlocked && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -238,7 +299,10 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
             )}
           </div>
 
+<<<<<<< Updated upstream
           {/* XP summary */}
+=======
+>>>>>>> Stashed changes
           {rewards.length > 0 && (
             <div className="px-8 py-2">
               <motion.div
@@ -248,14 +312,21 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
                 className="text-center text-sm text-slate-400 font-medium"
               >
                 <Star className="w-3.5 h-3.5 inline-block mr-1 text-amber-400" />
+<<<<<<< Updated upstream
                 Total XP earned: <span className="font-bold text-slate-700">
                   +{rewards.reduce((sum, r) => sum + (r.amount || 0), 0)}
                 </span>
+=======
+                Total XP earned: <span className="font-bold text-slate-700">+{rewards.reduce((sum, r) => sum + (r.amount || 0), 0)}</span>
+>>>>>>> Stashed changes
               </motion.div>
             </div>
           )}
 
+<<<<<<< Updated upstream
           {/* Close button */}
+=======
+>>>>>>> Stashed changes
           <div className="px-8 pb-8 pt-2">
             <motion.button
               initial={{ opacity: 0, y: 10 }}
@@ -268,11 +339,15 @@ export default function CelebrationModal({ rewards, worldUnlocked, onClose, onNa
             </motion.button>
           </div>
 
+<<<<<<< Updated upstream
           {/* Close X */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
           >
+=======
+          <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+>>>>>>> Stashed changes
             <X className="w-4 h-4 text-slate-400" />
           </button>
         </motion.div>
