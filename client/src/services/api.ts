@@ -183,4 +183,20 @@ export const gamificationAPI = {
   getLeaderboard: () => api.get("/gamification/leaderboard"),
 };
 
+export const braincoreAPI = {
+  getEnergy: () => api.get("/braincore/energy"),
+  getStatus: () => api.get("/braincore/status"),
+  updateEnergy: (data: Record<string, number>) => api.post("/braincore/energy", data),
+};
+
+export const companionAPI = {
+  getMyCompanion: () => api.get("/companion"),
+  getAvailable: () => api.get("/companion/available"),
+  selectCompanion: (companionId: string) => api.post("/companion/select", { companion_id: companionId }),
+  equipItem: (itemId: string, action: "equip" | "unequip") =>
+    api.post("/companion/items/equip", { item_id: itemId, action }),
+  getItems: () => api.get("/companion/items"),
+  awardXp: (amount: number) => api.post("/companion/xp", { amount }),
+};
+
 export default api;

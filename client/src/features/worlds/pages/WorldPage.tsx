@@ -17,6 +17,7 @@ import {
   Medal,
   Zap,
   CheckCircle2,
+  TreePine,
 } from "lucide-react";
 import { useWorld } from "../hooks/useWorlds";
 import { useWorldProgress, useBadges } from "../hooks/useProgress";
@@ -26,6 +27,8 @@ import ExperimentCard from "../components/ExperimentCard";
 import LearningJourney from "../components/LearningJourney";
 import BadgeDisplay from "../components/BadgeDisplay";
 import CelebrationModal from "../components/CelebrationModal";
+import WildlandsEnvironment from "../components/WildlandsEnvironment";
+import NovaBunnyCompanion from "../components/NovaBunnyCompanion";
 
 // Maps world slugs to their completion badge IDs
 const WORLD_BADGE_MAP: Record<string, string> = {
@@ -127,29 +130,52 @@ export default function WorldPage() {
         <ArrowLeft className="w-4 h-4" /> All Worlds
       </motion.button>
 
-      {/* Hero Section */}
+      {/* Hero Section — Immersive World Environment */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative rounded-3xl overflow-hidden bg-gradient-to-br ${world.gradient} shadow-xl mb-10`}
+        className={`relative h-[420px] md:h-[460px] rounded-3xl overflow-hidden shadow-xl mb-6 ${
+          world.slug === "discovery-island" ? "" : `bg-gradient-to-br ${world.gradient}`
+        }`}
       >
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
+        {/* Wildlands gets the 3D immersive environment */}
+        {world.slug === "discovery-island" ? (
+          <WildlandsEnvironment
+            evolution={worldProgress?.completion_pct ?? 0}
+            className="rounded-3xl"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br ${world.gradient}" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
+          </>
+        )}
 
-        <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
-          {/* Mascot */}
-          <div className="flex-shrink-0">
-            <Mascot
-              emoji={world.mascotEmoji}
-              name={world.mascotName}
-              personality={world.mascotPersonality}
-              size="lg"
-            />
+        {/* Overlay gradient for readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 z-[1]" />
+
+        <div className="relative z-[2] p-6 md:p-10 h-full flex flex-col md:flex-row items-center justify-end md:justify-between gap-4">
+          {/* Nova Bunny Companion for The Wildlands, generic mascot for others */}
+          <div className={`flex-shrink-0 ${world.slug === "discovery-island" ? "order-2 md:order-1 self-end md:self-center" : ""}`}>
+            {world.slug === "discovery-island" ? (
+              <NovaBunnyCompanion
+                progress={worldProgress?.completion_pct ?? 0}
+                completedCount={worldProgress?.completed_experiments.length ?? 0}
+                totalCount={worldProgress?.total_experiments ?? world.experiments.length}
+              />
+            ) : (
+              <Mascot
+                emoji={world.mascotEmoji}
+                name={world.mascotName}
+                personality={world.mascotPersonality}
+                size="lg"
+              />
+            )}
           </div>
 
           {/* Info */}
-          <div className="flex-1 text-center md:text-left">
+          <div className={`flex-1 text-center md:text-left ${world.slug === "discovery-island" ? "order-1 md:order-2" : ""}`}>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-white/30 text-white border border-white/30 uppercase tracking-wider">
                 {world.ageRange}
@@ -162,20 +188,25 @@ export default function WorldPage() {
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-white/30 text-white border border-white/30">
                 <Star className="w-3 h-3" /> {world.experiments.length} Experiments
               </span>
+              {world.slug === "discovery-island" && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-400/30 text-emerald-100 border border-emerald-400/30">
+                  <TreePine className="w-3 h-3" /> 3D Forest
+                </span>
+              )}
             </div>
 
             <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-md mb-2">
               {world.title}
             </h1>
-            <p className="text-lg text-white/90 font-semibold italic mb-4">
+            <p className="text-lg text-white/90 font-semibold italic mb-3">
               "{world.subtitle}"
             </p>
-            <p className="text-white/80 font-medium leading-relaxed max-w-2xl">
+            <p className="text-white/80 font-medium leading-relaxed max-w-2xl text-sm">
               {world.description}
             </p>
 
             {/* Skills */}
-            <div className="flex flex-wrap gap-2 mt-5">
+            <div className="flex flex-wrap gap-2 mt-4">
               {world.skills.map((skill) => (
                 <span
                   key={skill}

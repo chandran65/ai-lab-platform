@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
-import { worldsAPI, gamificationAPI } from "../services/api";
+import { worldsAPI, gamificationAPI, braincoreAPI } from "../services/api";
+import CompanionCard from "../features/worlds/components/CompanionCard";
 import {
-  Brain, Sparkles, ArrowRight, Play, Compass, Star,
+  Brain, Sparkles, ArrowRight, Compass, Star,
   Trees, Building2, Atom, Rocket, Puzzle, Swords, Scroll,
   Zap, Coins, Flame
 } from "lucide-react";
@@ -20,13 +22,13 @@ interface World {
   experiments: Array<{ id: string; title: string }>;
 }
 
-const BRAIN_ENERGIES = [
-  { key: "pattern", label: "Pattern", color: "from-emerald-400 to-teal-400", bg: "bg-emerald-50", pct: 35 },
-  { key: "logic", label: "Logic", color: "from-amber-400 to-orange-400", bg: "bg-amber-50", pct: 20 },
-  { key: "creative", label: "Creative", color: "from-violet-400 to-purple-400", bg: "bg-violet-50", pct: 45 },
-  { key: "problem", label: "Problem Solving", color: "from-rose-400 to-pink-400", bg: "bg-rose-50", pct: 15 },
-  { key: "ai", label: "AI", color: "from-cyan-400 to-blue-400", bg: "bg-cyan-50", pct: 10 },
-  { key: "innovation", label: "Innovation", color: "from-fuchsia-400 to-pink-500", bg: "bg-fuchsia-50", pct: 5 },
+const ENERGY_CONFIG = [
+  { key: "pattern", label: "Pattern", color: "from-emerald-400 to-teal-400", icon: Brain },
+  { key: "logic", label: "Logic", color: "from-amber-400 to-orange-400", icon: Brain },
+  { key: "creative", label: "Creative", color: "from-violet-400 to-purple-400", icon: Brain },
+  { key: "problem_solving", label: "Problem Solving", color: "from-rose-400 to-pink-400", icon: Brain },
+  { key: "ai", label: "AI", color: "from-cyan-400 to-blue-400", icon: Brain },
+  { key: "innovation", label: "Innovation", color: "from-fuchsia-400 to-pink-500", icon: Brain },
 ];
 
 const WORLD_ICONS: Record<string, typeof Trees> = {
@@ -36,41 +38,55 @@ const WORLD_ICONS: Record<string, typeof Trees> = {
   "innovation-city": Rocket,
 };
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [worlds, setWorlds] = useState<World[]>([]);
-  const [progress, setProgress] = useState<Record<string, any>>({});
-  const [greeting, setGreeting] = useState("Good Morning");
+  const [greeting] = useState(getGreeting);
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning");
-    else if (hour < 17) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
+  const { data: worlds = [] } = useQuery<World[]>({
+    queryKey: ["worlds"],
+    queryFn: async () => {
+      const res = await worldsAPI.list();
+      return res.data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    const loadData = async () => {
-      try {
-        const [wRes, pRes] = await Promise.all([
-          worldsAPI.list(),
-          gamificationAPI.getProgress().catch(() => ({ data: {} })),
-        ]);
-        setWorlds(wRes.data || []);
-        setProgress(pRes.data || {});
-      } catch { /* silent fallback */ }
-    };
-    loadData();
-  }, []);
+  const { data: progress = {} } = useQuery({
+    queryKey: ["gamification", "progress"],
+    queryFn: async () => {
+      const res = await gamificationAPI.getProgress();
+      return res.data ?? {};
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: brainEnergy } = useQuery({
+    queryKey: ["braincore", "energy"],
+    queryFn: async () => {
+      const res = await braincoreAPI.getEnergy();
+      return res.data;
+    },
+    staleTime: 60_000,
+  });
 
   const firstWorld = worlds[0];
-  const xp = progress?.total_xp ?? 0;
-  const level = progress?.level ?? 1;
-  const coins = progress?.coins ?? 0;
-  const streak = progress?.streak ?? 0;
-  const completedExps: string[] = progress?.completed_experiments ?? [];
+  const xp = (progress as any)?.total_xp ?? 0;
+  const level = (progress as any)?.level ?? 1;
+  const coins = (progress as any)?.coins ?? 0;
+  const streak = (progress as any)?.streak ?? 0;
+  const completedExps: string[] = (progress as any)?.completed_experiments ?? [];
   const totalExps = worlds.reduce((sum: number, w: World) => sum + (w.experiments?.length ?? 0), 0);
   const xpForNextLevel = level * 100;
   const xpProgress = Math.min((xp / xpForNextLevel) * 100, 100);
+  const energies: Record<string, number> = (brainEnergy as any)?.energies ?? {};
 
   return (
     <div className="space-y-8 pb-8 font-sans">
@@ -100,18 +116,8 @@ export default function HomePage() {
                 The Brain Core awaits your discovery. Complete missions to restore its power.
               </p>
             </div>
-            {/* Companion Preview */}
-            <div className="hidden md:flex flex-col items-center gap-1 bg-white/5 backdrop-blur-sm rounded-2xl px-5 py-4 border border-white/10">
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                className="text-5xl"
-              >
-                {firstWorld?.mascotEmoji || "🐰"}
-              </motion.div>
-              <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Companion</span>
-              <span className="text-xs font-black text-white">Nova Bunny</span>
-            </div>
+            {/* Companion Card — Live Companion System */}
+            <CompanionCard className="hidden md:flex w-56" />
           </div>
 
           {/* Brain Core — Central Energy Display */}
@@ -123,28 +129,31 @@ export default function HomePage() {
                 <span className="text-sm font-black text-white">Brain Core Energies</span>
               </div>
               <div className="space-y-2.5">
-                {BRAIN_ENERGIES.map((energy, i) => (
-                  <motion.div
-                    key={energy.key}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.08 }}
-                    className="flex items-center gap-2"
-                  >
-                    <span className="text-[10px] font-bold text-purple-300 w-24 truncate uppercase tracking-wider">
-                      {energy.label}
-                    </span>
-                    <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${energy.pct}%` }}
-                        transition={{ duration: 1.5, delay: 0.5 + i * 0.1, ease: "easeOut" }}
-                        className={`h-full rounded-full bg-gradient-to-r ${energy.color}`}
-                      />
-                    </div>
-                    <span className="text-[10px] font-bold text-purple-300 w-6 text-right">{energy.pct}%</span>
-                  </motion.div>
-                ))}
+                {ENERGY_CONFIG.map((energy, i) => {
+                  const pct = energies[energy.key] ?? 0;
+                  return (
+                    <motion.div
+                      key={energy.key}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.08 }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-[10px] font-bold text-purple-300 w-24 truncate uppercase tracking-wider">
+                        {energy.label}
+                      </span>
+                      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 1.5, delay: 0.5 + i * 0.1, ease: "easeOut" }}
+                          className={`h-full rounded-full bg-gradient-to-r ${energy.color}`}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold text-purple-300 w-6 text-right">{pct}%</span>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
 

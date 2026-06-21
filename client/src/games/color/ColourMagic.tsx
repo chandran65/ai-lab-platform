@@ -193,6 +193,17 @@ export default function ColourMagic() {
     loadProgress();
   }, []);
 
+  // PostMessage to parent — used by AnimalPatternHunt wildlands wrapper
+  useEffect(() => {
+    if (typeof currentLevel === "number") {
+      try {
+        window.parent.postMessage({ type: "colour_magic_level", level: currentLevel }, "*");
+      } catch {
+        // Parent may not exist (standalone mode)
+      }
+    }
+  }, [currentLevel]);
+
   // 2. Load the current level
   useEffect(() => {
     if (currentLevel >= LEVELS.length) return;

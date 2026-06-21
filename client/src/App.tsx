@@ -32,6 +32,7 @@ const BeeFlowerPath = lazy(() => import("./games/bee/BeeFlowerPath"));
 // Worlds
 const WorldExplorer = lazy(() => import("./features/worlds/pages/WorldExplorer"));
 const WorldPage = lazy(() => import("./features/worlds/pages/WorldPage"));
+const AnimalPatternHunt = lazy(() => import("./features/worlds/components/AnimalPatternHunt"));
 
 function PageLoading() {
   return (
@@ -68,6 +69,7 @@ function App() {
             <Route path="/games/turtle" element={<Suspense fallback={<PageLoading />}><TurtlePath /></Suspense>} />
             <Route path="/games/puppy" element={<Suspense fallback={<PageLoading />}><FeedPuppy /></Suspense>} />
             <Route path="/games/color" element={<Suspense fallback={<PageLoading />}><ColourMagic /></Suspense>} />
+            <Route path="/games/animal-pattern-hunt" element={<Suspense fallback={<PageLoading />}><AnimalPatternHunt worldSlug="discovery-island" /></Suspense>} />
             <Route path="/games/bee" element={<Suspense fallback={<PageLoading />}><BeeFlowerPath /></Suspense>} />
             <Route path="/sandbox" element={<Suspense fallback={<PageLoading />}><Dashboard /></Suspense>} />
             <Route path="/activities" element={<Suspense fallback={<PageLoading />}><Activities /></Suspense>} />

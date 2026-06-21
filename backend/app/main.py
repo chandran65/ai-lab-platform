@@ -428,6 +428,36 @@ def init_db():
             updated_at TEXT DEFAULT (datetime('now'))
         );
         CREATE INDEX IF NOT EXISTS idx_experiments_world ON experiments(world_slug);
+
+        -- Companion System Tables
+        CREATE TABLE IF NOT EXISTS companions (
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, emoji TEXT DEFAULT '🤖',
+            description TEXT, personality TEXT,
+            base_level INTEGER DEFAULT 1, skill_affinity TEXT,
+            evolution_emoji TEXT DEFAULT '🤖',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS companion_progress (
+            user_id TEXT PRIMARY KEY REFERENCES users(id),
+            companion_id TEXT NOT NULL REFERENCES companions(id),
+            level INTEGER DEFAULT 1,
+            total_xp INTEGER DEFAULT 0,
+            evolution_stage INTEGER DEFAULT 1,
+            equipped_items TEXT DEFAULT '[]',
+            unlocked_skills TEXT DEFAULT '[]',
+            active_skill_id TEXT,
+            last_active_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS companion_rewards (
+            id TEXT PRIMARY KEY,
+            user_id TEXT REFERENCES users(id),
+            reward_type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            emoji TEXT DEFAULT '🎁',
+            description TEXT,
+            unlocked_at TEXT DEFAULT (datetime('now'))
+        );
         """)
         _seed(db)
 
@@ -538,7 +568,7 @@ def _seed(db):
     # Init progress for demo student
     db.execute("INSERT INTO user_progress (user_id,completed_experiments,unlocked_worlds,world_progress) VALUES (?,?,?,?)",
                (stid, "[]", json.dumps(["discovery-island"]), "{}"))
-    db.execute("INSERT INTO brain_energy (user_id,pattern,logic,creative,problem_solving,ai,innovation) VALUES (?,?,?,?,?,?)",
+    db.execute("INSERT INTO brain_energy (user_id,pattern,logic,creative,problem_solving,ai,innovation) VALUES (?,?,?,?,?,?,?)",
                (stid, 15, 10, 20, 5, 8, 3))
 
     cid = str(uuid.uuid4())
@@ -548,6 +578,34 @@ def _seed(db):
     for pt, pn in [("image_classifier", "My Pet Classifier"), ("text_classifier", "Sentiment Analyzer")]:
         db.execute("INSERT INTO projects (id,name,description,project_type,user_id,class_id,school_id) VALUES (?,?,?,?,?,?,?)",
                    (str(uuid.uuid4()), pn, f"A {pt.replace('_',' ')} project", pt, stid, cid, sid))
+
+    # Companion seed data
+    if db.execute("SELECT COUNT(*) as c FROM companions").fetchone()["c"] == 0:
+        companion_data = [
+            ("nova-bunny", "Nova Bunny", "🐰", "A cheerful robotic bunny who loves patterns and puzzles. Your first companion!", "Cheerful and encouraging", "pattern", "✨"),
+            ("byte-fox", "Byte Fox", "🦊", "A clever robotic fox that excels at logic and strategy.", "Wise and witty", "logic", "🌟"),
+            ("professor-nova", "Professor Nova", "🦉", "A wise robotic owl who understands AI and data.", "Brilliant and patient", "ai", "💫"),
+            ("astra", "Astra", "🐉", "A visionary robotic dragon that masters innovation and leadership.", "Visionary and bold", "innovation", "⚡"),
+        ]
+        for cid, cn, cemoji, cdesc, cpers, saff, cevol in companion_data:
+            db.execute("INSERT INTO companions (id,name,emoji,description,personality,skill_affinity,evolution_emoji) VALUES (?,?,?,?,?,?,?)",
+                       (cid, cn, cemoji, cdesc, cpers, saff, cevol))
+
+        # Companion items (cosmetic unlocks)
+        items_data = [
+            ("crown", "Tiny Crown", "👑", "accessory", "A tiny crown for your companion", 2),
+            ("scarf", "Star Scarf", "🧣", "accessory", "A flowing star-patterned scarf", 3),
+            ("glasses", "Smart Glasses", "👓", "accessory", "Smart glasses that boost wisdom", 5),
+            ("cape", "Hero Cape", "🧥", "outfit", "A heroic cape for your companion", 7),
+            ("hat", "Wizard Hat", "🎩", "hat", "A magical wizard hat", 10),
+        ]
+        for iid, iname, iemoji, itype, idesc, ilevel in items_data:
+            db.execute("INSERT INTO companion_rewards (id,user_id,reward_type,name,emoji,description) VALUES (?,?,?,?,?,?)",
+                       (iid, None, f"item_{itype}", iname, iemoji, idesc))
+
+        # Give demo student Nova Bunny with some progress
+        db.execute("INSERT INTO companion_progress (user_id,companion_id,level,total_xp,evolution_stage,equipped_items,unlocked_skills) VALUES (?,?,?,?,?,?,?)",
+                   (stid, "nova-bunny", 3, 250, 1, json.dumps(["crown"]), json.dumps([])))
 
     # Seed legacy activities too
     if db.execute("SELECT COUNT(*) as c FROM activities").fetchone()["c"] == 0:
@@ -797,6 +855,15 @@ async def complete_experiment(world_id: str, experiment_id: str, body: CompleteE
             for ws_id, wo in world_order.items():
                 if wo == current_world_order + 1 and len(completed_in_world) >= len(world_exps) * 0.6:
                     unlocked.add(ws_id)
+            
+            # Award brain energy based on experiment type
+            energy_key = EXPERIMENT_ENERGY_MAP.get(experiment_id, "pattern")
+            energy_amt = 3 + (body.score or 0) // 10  # 3-12 points based on score
+            update_brain_energy(db, current_user["id"], energy_key, energy_amt)
+            
+            # Award companion XP (companion grows as student learns)
+            companion_xp = max(5, xp_earned // 2)
+            award_companion_xp(db, current_user["id"], companion_xp)
         
         db.execute("""UPDATE user_progress 
                        SET total_xp=?, level=?, coins=?, streak=?,
@@ -974,6 +1041,176 @@ async def update_braincore_energy(body: dict = Body(...), current_user: dict = D
                        (clamped, current_user["id"]))
         energies = get_brain_energy(db, current_user["id"])
     return {"energies": energies, "updated": list(updates.keys())}
+
+
+# ======================== COMPANIONS ========================
+
+COMPANION_XP_THRESHOLDS = [0, 100, 280, 520, 820, 1200, 1700, 2300, 3000, 4000]
+
+def get_companion(db, user_id: str) -> dict:
+    """Get user's companion with full details. Initializes default if none exists."""
+    cp = db.execute("SELECT * FROM companion_progress WHERE user_id=?", (user_id,)).fetchone()
+    if not cp:
+        # Auto-assign Nova Bunny
+        cp_id = "nova-bunny"
+        db.execute("INSERT INTO companion_progress (user_id,companion_id,level,total_xp,evolution_stage,equipped_items,unlocked_skills) VALUES (?,?,?,?,?,?,?)",
+                   (user_id, cp_id, 1, 0, 1, "[]", "[]"))
+        cp = db.execute("SELECT * FROM companion_progress WHERE user_id=?", (user_id,)).fetchone()
+    
+    cp_data = dict(cp)
+    comp = db.execute("SELECT * FROM companions WHERE id=?", (cp_data["companion_id"],)).fetchone()
+    if not comp:
+        return None
+    
+    comp_dict = dict(comp)
+    
+    # Calculate level progress
+    level = cp_data["level"]
+    total_xp = cp_data["total_xp"]
+    xp_for_current = COMPANION_XP_THRESHOLDS[min(level - 1, len(COMPANION_XP_THRESHOLDS) - 1)]
+    xp_for_next = COMPANION_XP_THRESHOLDS[min(level, len(COMPANION_XP_THRESHOLDS) - 1)]
+    xp_progress = ((total_xp - xp_for_current) / max(xp_for_next - xp_for_current, 1)) * 100 if xp_for_next > xp_for_current else 0
+    
+    # Get equipped items
+    equipped_ids = parse_json_field(cp_data["equipped_items"], [])
+    equipped_items = []
+    for item_id in equipped_ids:
+        item = db.execute("SELECT * FROM companion_rewards WHERE id=?", (item_id,)).fetchone()
+        if item:
+            equipped_items.append(dict(item))
+    
+    # Evolution stages
+    evo_stages = [
+        {"stage": 1, "emoji": comp_dict.get("emoji", "🤖"), "title": "Seed", "xp_required": 0},
+        {"stage": 2, "emoji": comp_dict.get("evolution_emoji", "✨"), "title": "Budding", "xp_required": 500},
+        {"stage": 3, "emoji": "🦸", "title": "Evolved", "xp_required": 2000},
+    ]
+    current_evo = next((e for e in reversed(evo_stages) if total_xp >= e["xp_required"]), evo_stages[0])
+    
+    return {
+        "companion_id": comp_dict["id"],
+        "name": comp_dict["name"],
+        "emoji": comp_dict["emoji"],
+        "description": comp_dict["description"],
+        "personality": comp_dict["personality"],
+        "skill_affinity": comp_dict.get("skill_affinity", ""),
+        "evolution_emoji": comp_dict.get("evolution_emoji", "✨"),
+        "level": level,
+        "total_xp": total_xp,
+        "xp_progress": round(xp_progress, 1),
+        "xp_for_next": xp_for_next - total_xp,
+        "evolution_stage": cp_data["evolution_stage"],
+        "current_evolution": current_evo,
+        "evolution_stages": evo_stages,
+        "equipped_items": equipped_items,
+        "unlocked_skills": parse_json_field(cp_data["unlocked_skills"], []),
+        "active_skill_id": cp_data.get("active_skill_id"),
+        "last_active_at": cp_data["last_active_at"],
+    }
+
+
+def award_companion_xp(db, user_id: str, amount: int = 10):
+    """Award XP to user's companion and check for level-ups."""
+    cp = db.execute("SELECT * FROM companion_progress WHERE user_id=?", (user_id,)).fetchone()
+    if not cp:
+        return None
+    
+    new_xp = cp["total_xp"] + amount
+    new_level = cp["level"]
+    
+    # Check level-up thresholds
+    for i, threshold in enumerate(COMPANION_XP_THRESHOLDS):
+        if new_xp >= threshold and i + 1 > new_level:
+            new_level = i + 1
+    
+    # Check evolution (stage 2 at 500 XP, stage 3 at 2000 XP)
+    new_evo = cp["evolution_stage"]
+    if new_xp >= 2000 and new_evo < 3:
+        new_evo = 3
+    elif new_xp >= 500 and new_evo < 2:
+        new_evo = 2
+    
+    db.execute("UPDATE companion_progress SET total_xp=?, level=?, evolution_stage=?, last_active_at=datetime('now') WHERE user_id=?",
+               (new_xp, new_level, new_evo, user_id))
+    
+    return {"new_xp": new_xp, "new_level": new_level, "new_evolution": new_evo, "xp_gained": amount}
+
+
+@app.get("/api/v1/companion")
+async def get_my_companion(current_user: dict = Depends(get_current_user)):
+    with get_db() as db:
+        companion = get_companion(db, current_user["id"])
+    if not companion:
+        return {"companion": None}
+    return companion
+
+
+@app.get("/api/v1/companion/available")
+async def get_available_companions():
+    with get_db() as db:
+        rows = db.execute("SELECT * FROM companions ORDER BY base_level ASC").fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/v1/companion/select")
+async def select_companion(body: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    companion_id = body.get("companion_id", "")
+    with get_db() as db:
+        comp = db.execute("SELECT * FROM companions WHERE id=?", (companion_id,)).fetchone()
+        if not comp:
+            raise HTTPException(status_code=404, detail="Companion not found")
+        # Upsert companion progress
+        existing = db.execute("SELECT * FROM companion_progress WHERE user_id=?", (current_user["id"],)).fetchone()
+        if existing:
+            db.execute("UPDATE companion_progress SET companion_id=?, last_active_at=datetime('now') WHERE user_id=?",
+                       (companion_id, current_user["id"]))
+        else:
+            db.execute("INSERT INTO companion_progress (user_id,companion_id,level,total_xp,evolution_stage,equipped_items,unlocked_skills) VALUES (?,?,?,?,?,?,?)",
+                       (current_user["id"], companion_id, 1, 0, 1, "[]", "[]"))
+        companion = get_companion(db, current_user["id"])
+    return companion
+
+
+@app.post("/api/v1/companion/items/equip")
+async def equip_item(body: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    item_id = body.get("item_id", "")
+    action = body.get("action", "equip")  # equip or unequip
+    
+    with get_db() as db:
+        cp = db.execute("SELECT * FROM companion_progress WHERE user_id=?", (current_user["id"],)).fetchone()
+        if not cp:
+            raise HTTPException(status_code=404, detail="No companion found")
+        
+        equipped = set(parse_json_field(cp["equipped_items"], []))
+        if action == "equip":
+            equipped.add(item_id)
+        else:
+            equipped.discard(item_id)
+        
+        db.execute("UPDATE companion_progress SET equipped_items=?, last_active_at=datetime('now') WHERE user_id=?",
+                   (json.dumps(sorted(equipped)), current_user["id"]))
+        companion = get_companion(db, current_user["id"])
+    return companion
+
+
+@app.get("/api/v1/companion/items")
+async def get_companion_items():
+    """Get all available companion items/rewards that can be unlocked."""
+    with get_db() as db:
+        rows = db.execute("SELECT * FROM companion_rewards ORDER BY id ASC").fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/v1/companion/xp")
+async def award_companion_xp_endpoint(body: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    """Manually award XP to companion (for testing or activities)."""
+    amount = max(1, min(100, body.get("amount", 10)))
+    with get_db() as db:
+        result = award_companion_xp(db, current_user["id"], amount)
+        if not result:
+            raise HTTPException(status_code=404, detail="No companion assigned")
+        companion = get_companion(db, current_user["id"])
+    return {"awarded": result, "companion": companion}
 
 
 # ======================== CERTIFICATES ========================
