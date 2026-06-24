@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { dashboardAPI, classesAPI } from "../services/api";
 import {
   GraduationCap, Users, FolderOpen, Brain, Plus,
