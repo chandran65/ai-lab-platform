@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Learning Lab Pro - Multi-Algorithm Experimentation Studio</title>
+  
+  <!-- Font Imports -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- ml5.js (version 0.12.2 ensures high compatibility & stability for MobileNet FeatureExtractor) -->
+  <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fullscreen Loading Overlay -->
+  <div id="loader-overlay" class="loader-overlay">
+    <div class="loader-content">
+      <div class="scanner-circle"></div>
+      <div style="font-family: var(--font-title); font-weight:700; font-size:16px; color:var(--text-main); margin-top:24px; letter-spacing: -0.2px;">
+        AI Learning Lab Pro
+      </div>
+      <div style="font-family: var(--font-mono); font-size:11px; color: var(--text-muted); margin-top:8px;">
+        COMPILING MULTI-MODEL ALGORITHM MATRICES...
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo" onclick="switchPane('dataset')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4 19a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3L14 9.5V2h-4z"/><path d="M8.5 2h7"/><path d="M16 16c-1.5-1-3.5-1-5 0s-3.5 1-5 0"/></svg>
+        <span class="nav-logo-text">AI Learning Lab Pro</span>
+        <span class="nav-logo-badge">V1.0</span>
+      </a>
+      
+      <div class="nav-tabs">
+        <button class="nav-tab active" id="tab-dataset" onclick="switchPane('dataset')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M3 15h12"/><path d="M3 18h12"/><path d="M3 12h12"/></svg>
+          Dataset Builder
+        </button>
+        <button class="nav-tab" id="tab-algorithms" onclick="switchPane('algorithms')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+          Algorithm Selection
+        </button>
+        <button class="nav-tab" id="tab-training" onclick="switchPane('training')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>
+          Model Training
+        </button>
+        <button class="nav-tab" id="tab-evaluation" onclick="switchPane('evaluation')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Analytics & Evaluation
+        </button>
+        <button class="nav-tab" id="tab-testing" onclick="switchPane('testing')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Model Testing Lab
+        </button>
+        <button class="nav-tab" id="tab-experiments" onclick="switchPane('experiments')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Experiments Log
+        </button>
+      </div>
+      
+      <div id="top-status" class="nav-status">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        CORE OFFLINE
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    
+    <!-- ==========================================
+         PANEL 1: DATASET BUILDER
+         ========================================== -->
+    <div id="pane-dataset" class="workspace-pane active">
+      
+      <!-- Dataset validation warnings -->
+      <div id="validation-box" class="validation-alert-box">
+        <h4 class="validation-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Dataset Quality Advisory
+        </h4>
+        <ul id="validation-list" class="validation-list">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <!-- Dataset Statistics Overview -->
+      <div class="dataset-overview-bar">
+        <div class="stat-card">
+          <span class="stat-label">Total Classes</span>
+          <span class="stat-val" id="stat-total-classes">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Samples</span>
+          <span class="stat-val" id="stat-total-samples">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Dataset Balance Ratio</span>
+          <span class="stat-val" id="stat-balance-ratio">1.00</span>
+        </div>
+        <div class="stat-card" style="position: relative;">
+          <span class="stat-label">Bulk Operations</span>
+          <div style="display:flex; gap:6px; margin-top: auto;">
+            <button class="btn-action-small" onclick="document.getElementById('import-dataset-file').click()">Import JSON</button>
+            <button class="btn-action-small" onclick="exportActiveDataset()">Export</button>
+          </div>
+          <input type="file" id="import-dataset-file" accept=".json" style="display:none;" onchange="importDatasetFile(event)" />
+        </div>
+      </div>
+
+      <div class="step-section-header">
+        <h2>1. Configure Custom Classes</h2>
+        <button class="btn-primary" onclick="openAddCategoryModal()">Create Class</button>
+      </div>
+
+      <div class="classes-grid" id="categories-container" style="margin-bottom: 30px;">
+        <!-- Categories populated dynamically -->
+      </div>
+      
+      <!-- Data Augmentation Engine -->
+      <div class="card" style="margin-top: 28px;">
+        <h3 style="font-family: var(--font-title); font-size:15px; font-weight:700; margin-top:0; margin-bottom:12px; color:var(--text-main);">
+          Data Augmentation Engine
+        </h3>
+        <p style="font-size:13.5px; color:var(--text-muted); margin-top:0; margin-bottom:16px;">
+          Apply canvas-based geometric and pixel transformations to artificially expand your dataset during model compile stages.
+        </p>
+        
+        <div class="aug-panel-grid">
+          <div>
+            <h4 class="stat-label" style="margin-bottom:12px;">Transforms Selection</h4>
+            <div class="aug-options-box">
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-flip" checked onchange="updateAugmentationPreview()" /> Horizontal Flip
+              </label>
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-rotation" checked onchange="updateAugmentationPreview()" /> Rotation (±15°)
+              </label>
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-brightness" checked onchange="updateAugmentationPreview()" /> Brightness (±25%)
+              </label>
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-zoom" checked onchange="updateAugmentationPreview()" /> Zoom Center
+              </label>
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-crop" checked onchange="updateAugmentationPreview()" /> Random Crop
+              </label>
+              <label class="aug-checkbox-wrapper">
+                <input type="checkbox" id="aug-noise" checked onchange="updateAugmentationPreview()" /> Pixel Noise
+              </label>
+            </div>
+          </div>
+          
+          <div style="border-left: 1px solid var(--border-color); padding-left: 20px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <h4 class="stat-label" style="margin-bottom:10px; align-self:flex-start;">Augmentation Live Preview</h4>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div style="text-align:center;">
+                <span style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:4px;">Original</span>
+                <div style="width:90px; height:90px; border-radius:6px; border:1px solid var(--border-color); overflow:hidden; background:#eee;">
+                  <img id="aug-preview-orig" style="width:100%; height:100%; object-fit:cover;" src="" alt="orig" />
+                </div>
+              </div>
+              <span style="display: flex; align-items: center; color: var(--border-color); width: 24px; height: 24px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </span>
+              <div style="text-align:center;">
+                <span style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:4px;">Augmented</span>
+                <div style="width:90px; height:90px; border-radius:6px; border:1px solid var(--border-color); overflow:hidden; background:#eee;">
+                  <canvas id="aug-preview-canvas" width="90" height="90" style="display:block;"></canvas>
+                </div>
+              </div>
+            </div>
+            <button class="btn-action-small" onclick="regenerateAugmentationPreview()" style="margin-top:12px;">Trigger Re-augment</button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- ==========================================
+         PANEL 2: ALGORITHM SELECTION
+         ========================================== -->
+    <div id="pane-algorithms" class="workspace-pane">
+      <div class="step-section-header">
+        <h2>2. Select Machine Learning Algorithms</h2>
+      </div>
+      
+      <div class="algo-grid" id="algo-container">
+        <!-- Model Selection Cards populated dynamically -->
+      </div>
+      
+      <!-- Hyperparameter Configuration Panel -->
+      <div class="card">
+        <h3 style="font-family: var(--font-title); font-size:15px; font-weight:700; margin-top:0; margin-bottom:16px; color:var(--text-main);">
+          Global Model Hyperparameters
+        </h3>
+        
+        <div class="hyper-grid">
+          <div class="hyper-item">
+            <label for="hyper-epochs">Training Cycles (Epochs)</label>
+            <select id="hyper-epochs">
+              <option value="10">10 Epochs</option>
+              <option value="20" selected>20 Epochs (Recommended)</option>
+              <option value="50">50 Epochs</option>
+              <option value="100">100 Epochs</option>
+            </select>
+          </div>
+          
+          <div class="hyper-item">
+            <label for="hyper-batch">Data Batch Size</label>
+            <select id="hyper-batch">
+              <option value="8">8 Samples</option>
+              <option value="16" selected>16 Samples</option>
+              <option value="32">32 Samples</option>
+              <option value="64">64 Samples</option>
+            </select>
+          </div>
+          
+          <div class="hyper-item">
+            <label for="hyper-lr">Optimizer Learning Rate</label>
+            <select id="hyper-lr">
+              <option value="0.1">0.1</option>
+              <option value="0.01" selected>0.01 (Recommended)</option>
+              <option value="0.001">0.001</option>
+            </select>
+          </div>
+          
+          <div class="hyper-item">
+            <label for="hyper-threshold">Inference Threshold</label>
+            <select id="hyper-threshold">
+              <option value="0.5">50% Certainty</option>
+              <option value="0.6">60% Certainty</option>
+              <option value="0.7">70% Certainty</option>
+              <option value="0.8" selected>80% Certainty (Default)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 3: TRAINING CENTER
+         ========================================== -->
+    <div id="pane-training" class="workspace-pane">
+      <div class="step-section-header">
+        <h2>3. Training Dashboard</h2>
+        <button id="global-train-btn" class="btn-primary" onclick="triggerMultiModelTraining()">Train Selected Models</button>
+      </div>
+      
+      <div class="card" style="padding:0; overflow:hidden; margin-bottom:24px;">
+        <table class="training-dashboard-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Status</th>
+              <th>Final Validation Accuracy</th>
+              <th>Optimization Loss</th>
+              <th>Training Time</th>
+            </tr>
+          </thead>
+          <tbody id="training-dashboard-body">
+            <!-- Training status generated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Real-time Training Progress Visualizer -->
+      <div class="grid-2col">
+        <!-- Abstract Neural Network SVG -->
+        <div class="card" style="text-align:center; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+          <h4 class="stat-label" style="margin-bottom:12px;">Active Weight Backpropagation</h4>
+          <div id="training-network-mascot" class="network-container">
+            <svg class="network-svg" viewBox="0 0 100 60">
+              <g stroke="rgba(255,255,255,0.08)" stroke-width="1.2" id="training-net-lines">
+                <line x1="15" y1="12" x2="50" y2="15" />
+                <line x1="15" y1="12" x2="50" y2="30" />
+                <line x1="15" y1="12" x2="50" y2="45" />
+                <line x1="15" y1="30" x2="50" y2="15" />
+                <line x1="15" y1="30" x2="50" y2="30" />
+                <line x1="15" y1="30" x2="50" y2="45" />
+                <line x1="15" y1="48" x2="50" y2="15" />
+                <line x1="15" y1="48" x2="50" y2="30" />
+                <line x1="15" y1="48" x2="50" y2="45" />
+                <line x1="50" y1="15" x2="85" y2="20" />
+                <line x1="50" y1="15" x2="85" y2="40" />
+                <line x1="50" y1="30" x2="85" y2="20" />
+                <line x1="50" y1="30" x2="85" y2="40" />
+                <line x1="50" y1="45" x2="85" y2="20" />
+                <line x1="50" y1="45" x2="85" y2="40" />
+              </g>
+              <g id="training-net-nodes">
+                <circle cx="15" cy="12" r="3.5" class="net-node node-input" style="color: var(--primary);" />
+                <circle cx="15" cy="30" r="3.5" class="net-node node-input" style="color: var(--primary);" />
+                <circle cx="15" cy="48" r="3.5" class="net-node node-input" style="color: var(--primary);" />
+                <circle cx="50" cy="15" r="3.5" class="net-node node-hidden" style="color: var(--secondary);" />
+                <circle cx="50" cy="30" r="3.5" class="net-node node-hidden" style="color: var(--secondary);" />
+                <circle cx="50" cy="45" r="3.5" class="net-node node-hidden" style="color: var(--secondary);" />
+                <circle cx="85" cy="20" r="3.5" class="net-node node-output" style="color: var(--success);" />
+                <circle cx="85" cy="40" r="3.5" class="net-node node-output" style="color: var(--success);" />
+              </g>
+            </svg>
+          </div>
+          <div id="global-training-text" style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:10px;">
+            Awaiting training execution command.
+          </div>
+        </div>
+
+        <!-- Loss Curve Canvas -->
+        <div class="card" style="display:flex; flex-direction:column;">
+          <h4 class="stat-label">Loss Optimization Trajectory</h4>
+          <canvas id="loss-canvas" style="flex-grow:1; width:100%; height:130px; display:block; background:rgba(0, 0, 0, 0.2); border-radius:6px; border:1px solid var(--border-color);"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 4: ANALYTICS & EVALUATION
+         ========================================== -->
+    <div id="pane-evaluation" class="workspace-pane" style="position: relative;">
+      
+      <!-- Lock Overlay screen -->
+      <div id="eval-panel-lock" class="lock-overlay">
+        <div style="text-align:center; padding: 20px;">
+          <div style="color: var(--primary); margin: 0 auto 16px auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div style="font-family: var(--font-title); font-weight: 700; font-size:13px; color: var(--primary); margin-bottom:8px; letter-spacing: 0.5px;">
+            EVALUATION PROTOCOLS LOCKED
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); max-width: 260px; margin: 0 auto; line-height: 1.5;">
+            Successfully complete a multi-model training cycle to generate evaluation metrics.
+          </p>
+        </div>
+      </div>
+
+      <div class="step-section-header">
+        <h2>4. Algorithm Performance Comparison</h2>
+      </div>
+
+      <!-- Performance Metrics Dashboard Table -->
+      <div class="card metrics-table-container" style="padding:0; overflow:hidden;">
+        <table class="training-dashboard-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Validation Accuracy</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1 Score</th>
+              <th>Training Duration</th>
+              <th>Inference Latency</th>
+            </tr>
+          </thead>
+          <tbody id="evaluation-dashboard-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Chart visualizer rows -->
+      <div class="charts-grid">
+        <div class="chart-box">
+          <span class="chart-title">Accuracy Evaluation</span>
+          <canvas id="chart-accuracy" style="width:100%; height:100%;"></canvas>
+        </div>
+        <div class="chart-box">
+          <span class="chart-title">Gradient Loss Convergence</span>
+          <canvas id="chart-loss" style="width:100%; height:100%;"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-grid" style="margin-bottom: 30px;">
+        <div class="chart-box">
+          <span class="chart-title">Training Time Efficiency (ms)</span>
+          <canvas id="chart-time" style="width:100%; height:100%;"></canvas>
+        </div>
+        <div class="chart-box">
+          <span class="chart-title">Inference Speed Latency (ms)</span>
+          <canvas id="chart-speed" style="width:100%; height:100%;"></canvas>
+        </div>
+      </div>
+
+      <!-- Confusion Matrix Section -->
+      <div class="card">
+        <h3 style="font-family: var(--font-title); font-size:15px; font-weight:700; margin-top:0; margin-bottom:12px; color:var(--text-main);">
+          Confusion Matrix Analyzer
+        </h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:0; margin-bottom:16px;">
+          Evaluate correct classifications versus false predictions generated by each algorithm across the datasets.
+        </p>
+        
+        <div class="matrix-selector-bar" id="matrix-btn-bar">
+          <!-- Dynamic model selector buttons -->
+        </div>
+        
+        <div class="matrix-wrapper" id="matrix-output-box">
+          <!-- Rendered grid map dynamically -->
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- ==========================================
+         PANEL 5: MODEL TESTING LAB
+         ========================================= -->
+    <div id="pane-testing" class="workspace-pane" style="position: relative;">
+      
+      <!-- Lock Overlay screen -->
+      <div id="test-panel-lock" class="lock-overlay">
+        <div style="text-align:center; padding: 20px;">
+          <div style="color: var(--primary); margin: 0 auto 16px auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div style="font-family: var(--font-title); font-weight: 700; font-size:13px; color: var(--primary); margin-bottom:8px; letter-spacing: 0.5px;">
+            TEST LAB LOCKED
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); max-width: 260px; margin: 0 auto; line-height: 1.5;">
+            Successfully train models in Step 2 to enable target testing inference.
+          </p>
+        </div>
+      </div>
+
+      <div class="step-section-header">
+        <h2>5. Custom Prediction Evaluation & Model Comparison</h2>
+      </div>
+
+      <div class="comparison-grid">
+        <!-- Left Column: Input Panel -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div class="card" style="flex-grow:1;">
+            <div class="test-tabs" style="margin-top:0;">
+              <button id="test-tab-upload" class="test-tab active" onclick="switchTestingInput('upload')" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Target File
+              </button>
+              <button id="test-tab-webcam" class="test-tab" onclick="switchTestingInput('webcam')" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2.45-1.45L16 7V5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2l4.55 1.45A2 2 0 0 0 23 17V7z"/></svg>
+                Live Webcam
+              </button>
+            </div>
+            
+            <!-- File Upload Testing -->
+            <div id="testing-upload-pane" style="min-height:160px; display:flex; flex-direction:column; justify-content:center;">
+              <div class="drop-zone" id="testing-drop-zone" style="min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center; margin-bottom:0;">
+                <p class="drop-zone-text" id="testing-upload-instructions">Drag test file here or select browse</p>
+                <input type="file" id="testing-file-input" accept="image/*" style="display:none;" onchange="handleTestingFileSelect(event)" />
+                <button class="btn-action-small" onclick="document.getElementById('testing-file-input').click()" style="margin-top:10px;">
+                  Browse Image
+                </button>
+              </div>
+              
+              <div id="testing-image-preview-wrapper" style="display:none; text-align:center; position:relative; margin-top:10px; border-radius:8px; overflow:hidden; border:1px solid var(--border-color); background:rgba(0,0,0,0.02); padding:6px;">
+                <img id="testing-image-preview" style="max-width:100%; max-height:180px; display:inline-block; border-radius:4px; object-fit:contain;" alt="inference target" />
+                <button class="remove-test-img-btn" onclick="clearTestingImage()" aria-label="Clear Image">×</button>
+              </div>
+            </div>
+            
+            <!-- Webcam Testing -->
+            <div id="testing-webcam-pane" style="display:none; flex-direction:column; justify-content:center; align-items:center;">
+              <div class="webcam-preview-container" style="max-width:240px; border-color: var(--border-color);">
+                <video id="testing-webcam-video" autoplay playsinline muted></video>
+                <div class="scanner-line" style="background: var(--primary); box-shadow: 0 0 8px var(--primary);"></div>
+                <div id="testing-webcam-spinner" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:12px; color:var(--text-muted);">
+                  Connecting camera stream...
+                </div>
+              </div>
+              <div style="text-align:center; margin-top:10px;">
+                <button id="testing-webcam-toggle-btn" class="btn-action-small" onclick="toggleTestingWebcam()" style="display:inline-flex; align-items:center; margin: 0 auto; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">
+                  <span>🔴 Stop Webcam</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Inference Model Comparison -->
+        <div class="card" style="display:flex; flex-direction:column;">
+          <h4 class="stat-label">Model Predictions & Disagreements</h4>
+          
+          <div id="testing-placeholder" style="flex-grow:1; display:flex; justify-content:center; align-items:center; text-align:center; padding:30px 10px; color:var(--text-muted); font-size:13px; border: 1px dashed var(--border-color); border-radius:8px;">
+            Awaiting inference target source...
+          </div>
+          
+          <div id="testing-comparison-box" style="display:none; flex-grow:1; flex-direction:column; gap:12px;">
+            <div class="comparison-cards-col" id="testing-results-col">
+              <!-- Dynamically populated predictions per model -->
+            </div>
+            
+            <!-- Disagreement Alert Banner -->
+            <div id="disagreement-banner" class="warning-banner" style="display:none; margin-top:8px; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.03); color: var(--danger);">
+              🚨 Prediction Conflict: Models returned conflicting classifications on this target.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explainable AI (XAI) Activation Mapping -->
+      <div class="card" style="margin-top: 28px;">
+        <h3 style="font-family: var(--font-title); font-size:15px; font-weight:700; margin-top:0; margin-bottom:12px; color:var(--text-main);">
+          Explainable AI (XAI) Model Interpretability
+        </h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:0; margin-bottom:16px;">
+          Analyze which spatial patterns and pixel areas triggered the highest activations in MobileNet's deep layers for the selected classification predictions.
+        </p>
+        
+        <div class="xai-wrapper">
+          <div class="xai-preview-box">
+            <img id="xai-image-element" class="xai-source-img" src="" alt="source visual" style="display:none;" />
+            <canvas id="xai-heatmap" class="xai-heatmap-canvas"></canvas>
+            <div id="xai-placeholder" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.4); font-size:12px;">
+              Awaiting target input...
+            </div>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; justify-content:center;">
+            <h4 class="stat-label">Spatial Activation Map</h4>
+            <p style="font-size:13px; line-height:1.5; color:var(--text-muted);">
+              The colored overlay shows the heat maps extracted from MobileNet's final convolutional layer activations. Red zones correspond to regions of maximum feature weights contributing to the prediction matrix.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- ==========================================
+         PANEL 6: EXPERIMENTS HISTORICAL LOG
+         ========================================== -->
+    <div id="pane-experiments" class="workspace-pane">
+      <div class="step-section-header">
+        <h2>6. Experiment Tracker Console</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-action-small" onclick="document.getElementById('import-experiments-file').click()">Import JSON Workspace</button>
+          <button class="btn-action-small" onclick="exportExperimentsHistory()">Export Workspace Log</button>
+          <input type="file" id="import-experiments-file" accept=".json" style="display:none;" onchange="importExperimentsHistoryFile(event)" />
+        </div>
+      </div>
+      
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="exp-table">
+          <thead>
+            <tr>
+              <th>Experiment ID</th>
+              <th>Timestamp</th>
+              <th>Configured Dataset</th>
+              <th>Configured Models</th>
+              <th>Validation Results</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="experiments-log-body">
+            <!-- Experiments generated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- --- MODALS --- -->
+
+  <!-- Add Category Modal -->
+  <div id="add-category-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content card">
+      <h3 id="modal-title" style="font-family: var(--font-title); font-size:15px; font-weight:700; margin-top:0; color:var(--text-main); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:18px;">
+        <span>Create New Class Label</span>
+        <button class="modal-close" onclick="closeAddCategoryModal()" aria-label="Close dialog">×</button>
+      </h3>
+      
+      <label class="input-label" for="category-name-input">Class Label Name</label>
+      <input type="text" id="category-name-input" placeholder="e.g., Mugs, Pens, Apples..." maxlength="15" autocomplete="off" />
+      
+      <label class="input-label" style="margin-top:18px;">Assign Class Color Code</label>
+      <div class="color-selector" id="modal-color-grid">
+        <!-- Rendered dynamically -->
+      </div>
+      
+      <div style="margin-top:24px; text-align:right; border-top:1px solid var(--border-color); padding-top:16px;">
+        <button class="btn-secondary" onclick="closeAddCategoryModal()" style="margin-right:8px;">Cancel</button>
+        <button class="btn-primary" onclick="submitNewCategory()" style="padding: 10px 18px;">Create Class</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webcam Capture Modal (Adding training images) -->
+  <div id="webcam-capture-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="webcam-modal-title">
+    <div class="modal-content card" style="max-width: 400px; border-color: var(--primary);">
+      <h3 style="font-family: var(--font-title); font-size:14px; font-weight:700; margin-top:0; color:var(--text-main); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:18px;">
+        <span id="webcam-modal-title">Snap Samples</span>
+        <button class="modal-close" onclick="closeWebcamModal()" aria-label="Close dialog">×</button>
+      </h3>
+      
+      <div class="webcam-preview-container">
+        <video id="capture-webcam-video" autoplay playsinline muted></video>
+        <div class="scanner-line"></div>
+      </div>
+      
+      <div style="text-align:center; margin-top:16px;">
+        <p id="webcam-instructions" style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+          Position subject and execute sample snapshot.
+        </p>
+        
+        <button id="snap-btn" class="btn-primary" onclick="captureSampleSnapshot()" style="width:100%; justify-content:center;">
+          Capture Sample
+        </button>
+      </div>
+      
+      <div class="captured-preview-row" id="webcam-captured-row">
+        <!-- Live thumbnails snapped -->
+      </div>
+      
+      <div style="margin-top:18px; text-align:right; border-top:1px solid var(--border-color); padding-top:12px;">
+        <button class="btn-secondary" onclick="closeWebcamModal()" style="width:100%;">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Container for training DOM Image tags to prevent Garbage Collection -->
+  <div id="hidden-training-images" style="display:none;"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
