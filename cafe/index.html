@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pet Café Builder — Code & Cook!</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-logo">🐾 Pet Café Builder</div>
+    <div class="hud-badges">
+      <span class="badge badge-level" id="level-badge">Level 1</span>
+      <span class="badge badge-concept" id="concept-badge">Functions</span>
+    </div>
+    <div class="hud-coins"><span>🪙</span><span id="coin-count">0</span></div>
+    <button id="shop-btn">🛒 Shop</button>
+  </div>
+
+  <!-- Progress -->
+  <div id="progress-dots"></div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- Café Scene -->
+    <div id="cafe-scene">
+      <div class="cafe-wallpaper"></div>
+      <div class="cafe-floor"></div>
+      <div id="decoration-bar"></div>
+      <div class="cafe-counter"></div>
+      <div id="speech-bubble" class="hidden"></div>
+      <div id="customer-area"></div>
+    </div>
+
+    <!-- Editor + Result -->
+    <div>
+      <div id="editor-area" class="hidden"></div>
+      <div id="result-panel" class="hidden">
+        <div id="result-emoji"></div>
+        <div id="result-msg"></div>
+        <div id="coin-reward"></div>
+        <div id="unlock-msg"></div>
+        <div class="result-btns">
+          <button id="next-btn" class="btn-next hidden">Next Order ➡️</button>
+          <button id="retry-btn" class="btn-retry hidden">Try Again 🔁</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div id="footer">Pet Café Builder — learn functions, one recipe at a time 🍰</div>
+
+</div>
+
+<!-- Shop Modal -->
+<div id="shop-modal" class="hidden">
+  <div class="shop-inner">
+    <div class="shop-header">
+      <span>🛍️ Decoration Shop</span>
+      <button id="shop-close">×</button>
+    </div>
+    <div id="shop-grid"></div>
+  </div>
+</div>
+
+<!-- Tutorial Overlay -->
+<div id="tutorial-overlay" class="hidden">
+  <div class="tutorial-card">
+    <div class="tutorial-emoji">👩‍🍳</div>
+    <h2>Welcome to your Café!</h2>
+    <p>Customers will order treats — your job is to write the <strong>recipe function</strong> that makes it!</p>
+    <ul class="tutorial-steps">
+      <li>👆 <span>Hover or tap a line of code to see what it does in the kitchen.</span></li>
+      <li>✏️ <span>Fill in the blanks with the right ingredients.</span></li>
+      <li>🍳 <span>Hit "Cook It!" — get it right for coins, get it wrong for a funny fail!</span></li>
+    </ul>
+    <button id="tutorial-close">Let's Cook! 🚀</button>
+  </div>
+</div>
+
+<script src="js/levels.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
