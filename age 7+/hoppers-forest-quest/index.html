@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hopper's Forest Quest — Learn Python!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1><span class="logo-bunny" aria-hidden="true">🐰</span> Hopper's Forest Quest</h1>
+      <p class="tagline">Learn real Python by guiding Hopper home.</p>
+    </div>
+  </header>
+
+  <main class="game-layout">
+    <!-- LEFT: Code panel -->
+    <section class="panel code-panel" aria-label="Your code">
+      <div class="panel-title">
+        <span>📝 Your code</span>
+        <span class="panel-hint">type real Python here!</span>
+      </div>
+
+      <div class="sage-area" id="sageArea">
+        <div class="sage-avatar" aria-hidden="true">🦉</div>
+        <div class="speech-bubble" id="sageBubble">
+          <p id="sageText">Hi, I'm Sage! Click <strong>Watch demo</strong> below and I'll show you exactly what to type and why.</p>
+        </div>
+      </div>
+
+      <div class="level-card" id="levelCard">
+        <h2 id="levelTitle">Level 1: Say hello to hopping!</h2>
+        <p id="levelGoal">Goal: get Hopper to the golden carrot 🥕</p>
+      </div>
+
+      <div class="editor-wrap">
+        <div class="line-numbers" id="lineNumbers" aria-hidden="true">1</div>
+        <textarea
+          id="codeEditor"
+          class="code-editor"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          aria-label="Python code editor"
+        ></textarea>
+        <div class="highlight-layer" id="highlightLayer" aria-hidden="true"></div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="btn btn-demo" id="btnDemo">
+          <span class="btn-icon">▶</span> Watch demo
+        </button>
+        <button type="button" class="btn btn-run" id="btnRun">
+          <span class="btn-icon">✨</span> Run my code
+        </button>
+        <button type="button" class="btn btn-reset" id="btnReset">
+          <span class="btn-icon">↺</span> Reset Hopper
+        </button>
+        <button type="button" class="btn btn-reset" id="btnPrevLevelNav" title="Go back to the previous level">
+          <span class="btn-icon">←</span> Previous level
+        </button>
+        <button type="button" class="btn btn-sm btn-reset sound-toggle" id="btnSoundToggle" title="Toggle sound effects" aria-pressed="true">
+          🔊 Sound on
+        </button>
+      </div>
+
+      <div class="status-bar" id="statusBar">
+        Click <strong>Watch demo</strong> to see how this level works.
+      </div>
+    </section>
+
+    <!-- RIGHT: Game stage -->
+    <section class="panel stage-panel" aria-label="The Forest">
+      <div class="panel-title">
+        <span>🌲 The Forest</span>
+        <span class="carrot-counter" id="carrotCounter">🥕 0 / 1</span>
+      </div>
+
+      <div class="stage-wrap">
+        <canvas id="gameCanvas" width="480" height="480" aria-label="Forest game stage"></canvas>
+        <div class="celebration hidden" id="celebration">
+          <div class="celebration-inner">
+            <span class="celebration-emoji">🎉</span>
+            <h3 id="celebrationTitle">Level complete!</h3>
+            <p id="celebrationText">Hopper found the carrot!</p>
+            <div class="celebration-actions">
+              <button type="button" class="btn btn-reset hidden" id="btnPrevLevel">← Previous level</button>
+              <button type="button" class="btn btn-run" id="btnNextLevel">Next level →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-legend">
+        <span><span class="dot hopper-dot"></span> Hopper</span>
+        <span><span class="dot carrot-dot"></span> Golden carrot</span>
+        <span><span class="dot ghost-dot"></span> Ghost trail (preview)</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- Line tutorial popup -->
+  <div class="line-tutorial hidden" id="lineTutorial" role="dialog" aria-live="polite">
+    <div class="line-tutorial-header">
+      <span class="sage-mini">🦉 Sage says:</span>
+      <button type="button" class="close-tutorial" id="closeTutorial" aria-label="Close tutorial">×</button>
+    </div>
+    <p id="lineTutorialText"></p>
+    <div class="line-tutorial-actions">
+      <button type="button" class="btn btn-sm btn-demo" id="btnTutorialPrev">← Back</button>
+      <button type="button" class="btn btn-sm btn-run" id="btnTutorialNext">Next →</button>
+    </div>
+  </div>
+
+  <script src="js/levels.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/tutorials.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

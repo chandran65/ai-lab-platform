@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pet Café Builder — Code & Cook!</title>
+<style>
+/* ════════════════════════════════════════════════════════
+   PET CAFÉ BUILDER — single-file build
+   ════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:    #FFF8EE;
+  --warm:     #FFF0D6;
+  --cafe-bg:  #3D2314;
+  --wood:     #7B4A2D;
+  --counter:  #A0622A;
+  --green:    #4CAF50;
+  --green-d:  #388E3C;
+  --red:      #E53935;
+  --amber:    #FFB300;
+  --amber-d:  #F57F17;
+  --teal:     #00897B;
+  --text:     #2C1810;
+  --text-mid: #5A3E2B;
+  --muted:    #9E7B6A;
+  --code-bg:  #1E1B18;
+  --code-hl:  #3D3020;
+  --syntax-kw:#E06C75;
+  --syntax-fn:#61AFEF;
+  --syntax-str:#98C379;
+  --syntax-num:#D19A66;
+  --syntax-cm: #5C6370;
+  --radius:   12px;
+  --radius-sm:8px;
+  --shadow:   0 4px 20px rgba(44,24,16,0.18);
+  --shadow-lg:0 8px 40px rgba(44,24,16,0.28);
+  --font-ui: 'Nunito', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+html, body { height: 100%; }
+html { font-size: 16px; }
+body { font-family: var(--font-ui); background: var(--cafe-bg); color: var(--text); overflow: hidden; }
+.hidden { display: none !important; }
+
+#app { display: grid; grid-template-rows: auto auto 1fr auto; height: 100vh; max-width: 1000px; margin: 0 auto; overflow: hidden; }
+
+/* ── HUD ─────────────────────────────────────────────── */
+#hud { background: var(--wood); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
+.hud-logo { font-size: 1.4rem; font-weight: 900; color: var(--cream); display: flex; align-items: center; gap: 6px; }
+.hud-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge { padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; }
+.badge-level { background: var(--amber); color: var(--cafe-bg); }
+.badge-concept { background: var(--teal); color: white; }
+.hud-coins { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 20px; font-weight: 800; color: var(--amber); font-size: 1.05rem; }
+#shop-btn { background: var(--amber); color: var(--cafe-bg); border: none; border-radius: 20px; padding: 6px 14px; font-weight: 800; font-family: var(--font-ui); font-size: 0.85rem; cursor: pointer; transition: transform 0.15s; }
+#shop-btn:hover { background: var(--amber-d); transform: scale(1.05); }
+
+#progress-dots { display: flex; gap: 6px; align-items: center; padding: 8px 20px; background: rgba(0,0,0,0.2); justify-content: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+.dot.done { background: var(--green); }
+.dot.active { background: var(--amber); transform: scale(1.3); box-shadow: 0 0 8px var(--amber); }
+
+/* ── Main grid ───────────────────────────────────────── */
+#main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; align-items: start; overflow: hidden; min-height: 0; }
+@media (max-width: 700px) { #main { grid-template-columns: 1fr; overflow-y: auto; } }
+
+#main > div { min-height: 0; max-height: 100%; overflow-y: auto; }
+
+/* ── Café scene ──────────────────────────────────────── */
+#cafe-scene { background: linear-gradient(160deg, #FFF5E4 0%, #FFE4B5 100%); border-radius: var(--radius); height: 100%; min-height: 280px; position: relative; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 20px; }
+.cafe-wallpaper { position: absolute; top: 0; left: 0; right: 0; height: 55%; background: repeating-linear-gradient(90deg, rgba(255,200,100,0.08) 0px, rgba(255,200,100,0.08) 2px, transparent 2px, transparent 28px), linear-gradient(180deg, #FFE4B5 0%, #FFD580 100%); }
+.cafe-floor { position: absolute; bottom: 0; left: 0; right: 0; height: 45%; background: repeating-linear-gradient(45deg, #D4A96A 0px, #D4A96A 20px, #C49A5A 20px, #C49A5A 40px); opacity: 0.6; }
+.cafe-counter { position: absolute; bottom: 60px; left: 0; right: 0; height: 30px; background: var(--counter); border-radius: 4px 4px 0 0; box-shadow: 0 -3px 8px rgba(0,0,0,0.2); }
+
+#decoration-bar { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 6px; z-index: 20; flex-wrap: wrap; }
+.dec-item { font-size: 1.5rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: float 3s ease-in-out infinite; }
+.dec-hint { font-size: 0.7rem; color: var(--muted); background: rgba(255,255,255,0.7); padding: 3px 8px; border-radius: 10px; }
+
+#customer-area { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.customer-char { display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateX(-120px); opacity: 0; transition: transform 0.6s cubic-bezier(0.34,1.56,0.64,1), opacity 0.5s; }
+.customer-char.entered { transform: translateX(0); opacity: 1; }
+.customer-char.happy { animation: bounce 0.5s ease 3; }
+.customer-char.unhappy { animation: shake 0.4s ease 2; }
+.customer-emoji { font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2)); }
+.customer-name { font-size: 0.78rem; font-weight: 800; color: var(--text); background: rgba(255,255,255,0.85); padding: 2px 10px; border-radius: 12px; }
+
+#speech-bubble { background: white; border: 3px solid var(--wood); border-radius: var(--radius); padding: 10px 14px; max-width: 85%; position: relative; z-index: 10; box-shadow: var(--shadow); text-align: center; animation: pop 0.3s ease; }
+#speech-bubble::after { content: ""; position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); border: 8px solid transparent; border-top-color: var(--wood); }
+.order-text { font-size: 0.88rem; color: var(--text-mid); margin-bottom: 6px; font-style: italic; }
+.order-item { font-size: 1.05rem; font-weight: 800; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* ── Mascot guide ────────────────────────────────────── */
+#mascot-dock { position: absolute; top: 50px; left: 8px; right: 8px; z-index: 30; display: flex; align-items: flex-start; gap: 8px; }
+.mascot-char { font-size: 2.4rem; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.25)); flex-shrink: 0; transition: transform 0.25s; cursor: default; }
+.mascot-char.talk { animation: mascotBob 0.6s ease infinite; }
+.mascot-bubble { background: var(--cream); border: 2px solid var(--wood); border-radius: 14px; padding: 8px 12px; font-size: 0.78rem; font-weight: 700; color: var(--text); box-shadow: var(--shadow); max-width: 240px; line-height: 1.35; position: relative; animation: pop 0.25s ease; }
+.mascot-bubble::after { content: ""; position: absolute; left: -8px; top: 14px; border: 7px solid transparent; border-right-color: var(--wood); }
+
+/* ── Editor area ─────────────────────────────────────── */
+#editor-area { display: flex; flex-direction: column; gap: 12px; }
+.recipe-card { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,0.06); }
+.recipe-header { background: var(--wood); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.recipe-icon { font-size: 1.4rem; }
+.recipe-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.7); font-weight: 700; }
+.recipe-subtitle { font-size: 1rem; font-weight: 900; color: var(--cream); font-family: var(--font-code); }
+.recipe-hint { margin-left: auto; font-size: 0.7rem; color: rgba(255,255,255,0.6); text-align: right; }
+
+/* hint card showing the recipe goal */
+.goal-box { background: rgba(255,255,255,0.05); margin: 10px 16px 0; padding: 10px 12px; border-radius: var(--radius-sm); border-left: 3px solid var(--amber); }
+.goal-box-title { font-size: 0.68rem; color: var(--amber); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.goal-box-text { font-size: 0.82rem; color: #ABB2BF; line-height: 1.5; }
+.goal-box-text code { color: var(--syntax-fn); background: rgba(97,175,239,0.1); padding: 1px 5px; border-radius: 4px; }
+
+/* the typed python editor */
+.code-editor-wrap { margin: 12px 16px; }
+.editor-toolbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.editor-dot { width: 10px; height: 10px; border-radius: 50%; }
+.editor-dot.r { background: #FF5F56; } .editor-dot.y { background: #FFBD2E; } .editor-dot.g { background: #27C93F; }
+.editor-filename { margin-left: 8px; font-size: 0.72rem; color: var(--syntax-cm); font-family: var(--font-code); }
+
+.code-editor-stack {
+  position: relative;
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  background: #16140F;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255,255,255,0.08);
+  min-height: 160px;
+  max-height: 280px;
+  transition: border-color 0.2s;
+}
+.code-editor-stack.focused { border-color: var(--amber); }
+.code-editor-backdrop, .code-editor-input {
+  margin: 0;
+  padding: 12px 14px;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 4;
+  box-sizing: border-box;
+  border: none;
+}
+.code-editor-backdrop { color: #ABB2BF; pointer-events: none; }
+.code-editor-backdrop .tok-kw { color: var(--syntax-kw); font-weight: 600; }
+.code-editor-backdrop .tok-fn { color: var(--syntax-fn); }
+.code-editor-backdrop .tok-str { color: var(--syntax-str); }
+.code-editor-backdrop .tok-num { color: var(--syntax-num); }
+.code-editor-backdrop .tok-cm { color: var(--syntax-cm); font-style: italic; }
+.code-editor-input {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--amber);
+  resize: none;
+  outline: none;
+  z-index: 2;
+}
+.code-editor-input::selection { background: rgba(255,179,0,0.35); }
+
+.live-feedback { margin-top: 6px; min-height: 20px; font-size: 0.76rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.live-feedback.ok { color: var(--syntax-str); }
+.live-feedback.err { color: #FF7B72; }
+.live-feedback.idle { color: var(--syntax-cm); }
+
+.starter-tools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.snippet-btn { background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.25); color: #ABB2BF; font-family: var(--font-code); font-size: 0.72rem; padding: 4px 9px; border-radius: 14px; cursor: pointer; transition: all 0.15s; }
+.snippet-btn:hover { background: rgba(255,179,0,0.15); border-color: var(--amber); color: var(--amber); }
+
+.btn-cook { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 32px); margin: 4px 16px 16px; padding: 14px; background: linear-gradient(135deg, var(--green), var(--green-d)); color: white; font-family: var(--font-ui); font-size: 1.05rem; font-weight: 900; border: none; border-radius: var(--radius); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 14px rgba(76,175,80,0.4); }
+.btn-cook:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(76,175,80,0.5); }
+.btn-cook:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── Result panel ────────────────────────────────────── */
+#result-panel { background: var(--cream); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); animation: pop 0.4s ease; }
+#result-panel.success { border-top: 5px solid var(--green); }
+#result-panel.fail { border-top: 5px solid var(--red); }
+#result-emoji { font-size: 2.5rem; margin-bottom: 8px; }
+#result-msg { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+#coin-reward { font-size: 0.9rem; color: var(--text-mid); margin-bottom: 6px; }
+#unlock-msg { font-size: 0.85rem; color: var(--teal); font-weight: 700; }
+.result-btns { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.btn-next, .btn-retry { padding: 10px 24px; border-radius: 20px; font-family: var(--font-ui); font-size: 0.95rem; font-weight: 800; border: none; cursor: pointer; transition: transform 0.15s; }
+.btn-next { background: var(--green); color: white; }
+.btn-retry { background: var(--amber); color: var(--cafe-bg); }
+.btn-next:hover, .btn-retry:hover { transform: scale(1.05); }
+
+/* ── Shop modal ──────────────────────────────────────── */
+#shop-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+.shop-inner { background: var(--cream); border-radius: var(--radius); width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.shop-header { background: var(--wood); color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-radius: var(--radius) var(--radius) 0 0; font-weight: 900; font-size: 1.1rem; }
+#shop-close { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; line-height: 1; }
+#shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; }
+.shop-item { background: white; border-radius: var(--radius-sm); padding: 14px 10px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.shop-item.item-active { border: 2px solid var(--green); }
+.shop-emoji { font-size: 2rem; margin-bottom: 6px; }
+.shop-name { font-size: 0.75rem; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; }
+.btn-locked { background: #EEE; color: #AAA; border: none; border-radius: 12px; padding: 5px 10px; font-size: 0.72rem; font-weight: 700; cursor: default; }
+.btn-active { background: var(--green); color: white; border: none; border-radius: 12px; padding: 5px 10px; font-size: 0.72rem; font-weight: 700; }
+.btn-buy { background: var(--amber); color: var(--cafe-bg); border: none; border-radius: 12px; padding: 5px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+.btn-cant { background: #DDD; color: #888; border: none; border-radius: 12px; padding: 5px 10px; font-size: 0.72rem; font-weight: 700; cursor: default; }
+.btn-buy:hover { background: var(--amber-d); }
+
+/* ── Tutorial overlay ────────────────────────────────── */
+#tutorial-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.tutorial-card { background: var(--cream); border-radius: var(--radius); max-width: 400px; padding: 28px 24px; text-align: center; box-shadow: var(--shadow-lg); animation: pop 0.4s ease; }
+.tutorial-emoji { font-size: 3rem; margin-bottom: 12px; }
+.tutorial-card h2 { font-size: 1.3rem; color: var(--text); margin-bottom: 10px; }
+.tutorial-card p { font-size: 0.9rem; color: var(--text-mid); line-height: 1.6; margin-bottom: 8px; }
+.tutorial-steps { text-align: left; margin: 14px 0; }
+.tutorial-steps li { font-size: 0.85rem; color: var(--text-mid); margin-bottom: 8px; padding-left: 8px; list-style: none; display: flex; gap: 8px; align-items: flex-start; }
+#tutorial-close { background: var(--green); color: white; border: none; border-radius: 20px; padding: 12px 28px; font-family: var(--font-ui); font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 10px; transition: transform 0.15s; }
+#tutorial-close:hover { transform: scale(1.05); }
+
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+@keyframes pop { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes mascotBob { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-6deg); } }
+
+.coin-burst { position: absolute; font-size: 1.4rem; top: 50%; animation: coinFly 1.1s ease forwards; pointer-events: none; z-index: 50; }
+@keyframes coinFly { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(0.5); opacity: 0; } }
+.fail-animation { position: absolute; font-size: 3rem; top: 40%; left: 40%; animation: explode 1s ease forwards; pointer-events: none; z-index: 50; }
+@keyframes explode { 0% { transform: scale(0); opacity: 1; } 60% { transform: scale(2.5); opacity: 1; } 100% { transform: scale(0.5); opacity: 0; } }
+
+.game-complete { position: relative; z-index: 10; text-align: center; padding: 30px 20px; }
+.complete-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+.game-complete h2 { font-size: 1.5rem; color: var(--text); margin-bottom: 8px; }
+.game-complete p { font-size: 0.9rem; color: var(--text-mid); margin-bottom: 10px; }
+.complete-coins { font-size: 1.1rem; font-weight: 800; color: var(--amber-d); margin-bottom: 16px; }
+
+#footer { background: var(--wood); padding: 8px 20px; text-align: center; font-size: 0.72rem; color: rgba(255,255,255,0.5); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+::-webkit-scrollbar-thumb { background: var(--counter); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-logo">🐾 Pet Café Builder</div>
+    <div class="hud-badges">
+      <span class="badge badge-level" id="level-badge">Level 1</span>
+      <span class="badge badge-concept" id="concept-badge">Functions</span>
+    </div>
+    <div class="hud-coins"><span>🪙</span><span id="coin-count">0</span></div>
+    <button id="shop-btn">🛒 Shop</button>
+  </div>
+
+  <div id="progress-dots"></div>
+
+  <div id="main">
+
+    <div id="cafe-scene">
+      <div class="cafe-wallpaper"></div>
+      <div class="cafe-floor"></div>
+      <div id="decoration-bar"></div>
+      <div class="cafe-counter"></div>
+      <div id="speech-bubble" class="hidden"></div>
+      <div id="customer-area"></div>
+      <div id="mascot-dock"></div>
+    </div>
+
+    <div>
+      <div id="editor-area" class="hidden"></div>
+      <div id="result-panel" class="hidden">
+        <div id="result-emoji"></div>
+        <div id="result-msg"></div>
+        <div id="coin-reward"></div>
+        <div id="unlock-msg"></div>
+        <div class="result-btns">
+          <button id="next-btn" class="btn-next hidden">Next Order ➡️</button>
+          <button id="retry-btn" class="btn-retry hidden">Try Again 🔁</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="footer">Pet Café Builder — learn real Python, one recipe at a time 🍰</div>
+
+</div>
+
+<div id="shop-modal" class="hidden">
+  <div class="shop-inner">
+    <div class="shop-header"><span>🛍️ Decoration Shop</span><button id="shop-close">×</button></div>
+    <div id="shop-grid"></div>
+  </div>
+</div>
+
+<div id="tutorial-overlay" class="hidden">
+  <div class="tutorial-card">
+    <div class="tutorial-emoji">🐱‍🍳</div>
+    <h2>Meet Chef Whiskers!</h2>
+    <p>Whiskers is your guide — they'll help you write real Python code to make treats for café customers.</p>
+    <ul class="tutorial-steps">
+      <li>📋 <span>Read the goal box to see what your function needs to do.</span></li>
+      <li>⌨️ <span>Type real Python in the editor — Whiskers will check it live!</span></li>
+      <li>🍳 <span>Hit "Cook It!" — get it right for coins, get it wrong for a funny fail!</span></li>
+    </ul>
+    <button id="tutorial-close">Let's Cook! 🚀</button>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   SOUND ENGINE — synthesized via Web Audio API (no audio files)
+   Blends arcade-style feedback beeps with soft café ambience.
+   ════════════════════════════════════════════════════════ */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+    this.ambienceNodes = null;
+    try {
+      const saved = localStorage.getItem("petcafe_muted");
+      this.muted = saved === "true";
+    } catch (_) {}
+  }
+
+  _ensureCtx() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume();
+    return this.ctx;
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    try { localStorage.setItem("petcafe_muted", String(this.muted)); } catch (_) {}
+    if (this.muted) this.stopAmbience();
+    else this.startAmbience();
+    return this.muted;
+  }
+
+  _tone(freq, duration, type, startTime, gainPeak) {
+    if (this.muted) return;
+    const ctx = this._ensureCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(gainPeak || 0.18, startTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+
+  _noise(duration, startTime, gainPeak, filterFreq) {
+    if (this.muted) return;
+    const ctx = this._ensureCtx();
+    const bufferSize = ctx.sampleRate * duration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = filterFreq || 1200;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(gainPeak || 0.12, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(startTime);
+    noise.stop(startTime + duration + 0.02);
+  }
+
+  click() {
+    const ctx = this._ensureCtx();
+    this._tone(880, 0.06, "square", ctx.currentTime, 0.08);
+  }
+
+  type() {
+    const ctx = this._ensureCtx();
+    this._tone(1400 + Math.random() * 200, 0.03, "square", ctx.currentTime, 0.025);
+  }
+
+  errorBeep() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._tone(220, 0.12, "sawtooth", t, 0.1);
+    this._tone(180, 0.16, "sawtooth", t + 0.08, 0.09);
+  }
+
+  successChime() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    // arcade-style ascending arpeggio
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      this._tone(freq, 0.22, "triangle", t + i * 0.09, 0.14);
+    });
+  }
+
+  coinPing() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._tone(1318.5, 0.08, "square", t, 0.12);
+    this._tone(1567.98, 0.12, "square", t + 0.06, 0.1);
+  }
+
+  failBuzz() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._tone(140, 0.3, "sawtooth", t, 0.14);
+    this._tone(110, 0.35, "sawtooth", t + 0.05, 0.12);
+    this._noise(0.25, t + 0.05, 0.1, 400);
+  }
+
+  blender() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._noise(0.9, t, 0.09, 2200);
+    this._tone(180, 0.9, "sawtooth", t, 0.04);
+  }
+
+  bell() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._tone(1760, 0.5, "sine", t, 0.12);
+    this._tone(2637, 0.4, "sine", t + 0.01, 0.06);
+  }
+
+  cashRegister() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    this._tone(2000, 0.05, "square", t, 0.08);
+    this._noise(0.15, t + 0.04, 0.08, 3000);
+  }
+
+  whoosh() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(600, t + 0.35);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.08, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.4);
+  }
+
+  trophyFanfare() {
+    const ctx = this._ensureCtx();
+    const t = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((freq, i) => {
+      this._tone(freq, 0.3, "triangle", t + i * 0.1, 0.16);
+    });
+    this._noise(0.6, t + 0.4, 0.06, 4000);
+  }
+
+  // ── Soft ambient café loop: a gentle low hum + occasional chime ──
+  startAmbience() {
+    if (this.muted || this.ambienceNodes) return;
+    const ctx = this._ensureCtx();
+    const hum = ctx.createOscillator();
+    const humGain = ctx.createGain();
+    hum.type = "sine";
+    hum.frequency.value = 80;
+    humGain.gain.value = 0.012;
+    hum.connect(humGain).connect(ctx.destination);
+    hum.start();
+    this.ambienceNodes = { hum, humGain };
+
+    this._ambienceInterval = setInterval(() => {
+      if (this.muted) return;
+      if (Math.random() < 0.3) {
+        const ctx2 = this._ensureCtx();
+        this._tone(2400 + Math.random() * 400, 0.15, "sine", ctx2.currentTime, 0.015);
+      }
+    }, 4000);
+  }
+
+  stopAmbience() {
+    if (this.ambienceNodes) {
+      try { this.ambienceNodes.hum.stop(); } catch (_) {}
+      this.ambienceNodes = null;
+    }
+    if (this._ambienceInterval) clearInterval(this._ambienceInterval);
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   LEVEL DATA
+   ════════════════════════════════════════════════════════ */
+const LEVELS = [
+  {
+    id: 1,
+    title: "The First Smoothie",
+    concept: "Functions",
+    customer: { name: "Benny Bunny", emoji: "🐰", order: "Strawberry Smoothie", orderEmoji: "🍓🥤",
+      dialogue: "One strawberry smoothie please!" },
+    goal: "Write a function called <code>make_smoothie</code> that takes one parameter, <code>fruit</code>, and returns the text <code>fruit + \" smoothie\"</code>.",
+    starter: `def make_smoothie(fruit):\n    `,
+    snippets: ["return fruit + \" smoothie\"", "fruit", "def make_smoothie(fruit):"],
+    check: (code) => {
+      const hasDef = /def\s+make_smoothie\s*\(\s*fruit\s*\)\s*:/.test(code);
+      const hasReturn = /return\s+fruit\s*\+\s*["']\s*smoothie["']/.test(code) || /return\s+fruit\s*\+\s*["']smoothie["']/.test(code);
+      return { pass: hasDef && hasReturn, hasDef, hasReturn };
+    },
+    mascotHints: {
+      empty: "Start with `def make_smoothie(fruit):` then press Enter and indent!",
+      noDef: "I don't see the `def make_smoothie(fruit):` line yet — that's how we name our recipe!",
+      noReturn: "Almost there! Don't forget to `return` the smoothie, or Benny gets nothing!",
+      good: "That looks perfect! Hit Cook It! 🎉"
+    },
+    coins: 10, unlocks: "New table decoration 🌸"
+  },
+  {
+    id: 2,
+    title: "The Cozy Cookie",
+    concept: "Return values",
+    customer: { name: "Mittens Cat", emoji: "🐱", order: "Chocolate Cookie", orderEmoji: "🍪",
+      dialogue: "Meow... I'd love a chocolate cookie!" },
+    goal: "Write <code>bake_cookie(flavour, minutes)</code> that returns <code>flavour + \" cookie baked for \" + str(minutes) + \" min\"</code>.",
+    starter: `def bake_cookie(flavour, minutes):\n    `,
+    snippets: ["return flavour + \" cookie baked for \" + str(minutes) + \" min\"", "str(minutes)", "def bake_cookie(flavour, minutes):"],
+    check: (code) => {
+      const hasDef = /def\s+bake_cookie\s*\(\s*flavour\s*,\s*minutes\s*\)\s*:/.test(code);
+      const hasReturn = /return\s+flavour\s*\+.*str\(\s*minutes\s*\)/.test(code);
+      return { pass: hasDef && hasReturn, hasDef, hasReturn };
+    },
+    mascotHints: {
+      empty: "Two ingredients this time: `flavour` and `minutes`. Try `def bake_cookie(flavour, minutes):`",
+      noDef: "The function needs BOTH parameters: flavour and minutes — check your def line!",
+      noReturn: "Use `str(minutes)` to turn the number into text before joining it with +",
+      good: "Mittens is purring already! Hit Cook It! 🎉"
+    },
+    coins: 15, unlocks: "Cute bunny wall poster 🐰"
+  },
+  {
+    id: 3,
+    title: "The Super Shake",
+    concept: "Calling functions",
+    customer: { name: "Bruno Bear", emoji: "🐻", order: "Berry Super Shake", orderEmoji: "🍇🥛",
+      dialogue: "ROAR! Give me the strongest shake you've got!" },
+    goal: "First write a helper <code>make_base()</code> that returns <code>\"protein milk\"</code>. Then write <code>make_super_shake(berry)</code> that returns <code>make_base() + \" with \" + berry</code>.",
+    starter: `def make_base():\n    return "protein milk"\n\ndef make_super_shake(berry):\n    `,
+    snippets: ["return make_base() + \" with \" + berry", "make_base()", "def make_super_shake(berry):"],
+    check: (code) => {
+      const hasBase = /def\s+make_base\s*\(\s*\)\s*:[\s\S]*return\s*["']protein milk["']/.test(code);
+      const hasShake = /def\s+make_super_shake\s*\(\s*berry\s*\)\s*:/.test(code);
+      const callsBase = /return\s+make_base\(\)\s*\+.*berry/.test(code);
+      return { pass: hasBase && hasShake && callsBase, hasBase, hasShake, callsBase };
+    },
+    mascotHints: {
+      empty: "This recipe needs TWO functions — a helper `make_base()` and the main `make_super_shake(berry)`.",
+      noBase: "Don't forget `make_base()` should return \"protein milk\"!",
+      noShake: "Now write `def make_super_shake(berry):` below your base function.",
+      noCall: "Inside make_super_shake, call your helper: `return make_base() + \" with \" + berry`",
+      good: "Whoa, nested functions! Bruno is gonna love this. Cook It! 🎉"
+    },
+    coins: 20, unlocks: "Bear plushie on counter 🧸"
+  },
+  {
+    id: 4,
+    title: "Debug the Lemonade!",
+    concept: "Debugging",
+    customer: { name: "Penny Penguin", emoji: "🐧", order: "Fresh Lemonade", orderEmoji: "🍋🥤",
+      dialogue: "Someone gave me a broken recipe... can you fix it?" },
+    goal: "Fix the bug below! The function should return <code>str(lemons) + \" lemons, sugar: \" + sugar</code> — but a typo is breaking it.",
+    starter: `def make_lemonade(lemons, sugar):\n    retrun str(lemons) + " lemons, sugar: " + sugar`,
+    snippets: ["return", "str(lemons)", "def make_lemonade(lemons, sugar):"],
+    check: (code) => {
+      const hasDef = /def\s+make_lemonade\s*\(\s*lemons\s*,\s*sugar\s*\)\s*:/.test(code);
+      const hasTypo = /retrun/.test(code);
+      const hasReturn = /\breturn\b\s+str\(\s*lemons\s*\)\s*\+.*sugar/.test(code);
+      return { pass: hasDef && hasReturn && !hasTypo, hasDef, hasTypo, hasReturn };
+    },
+    mascotHints: {
+      empty: "There's a sneaky typo in this recipe... read it carefully!",
+      hasTypo: "Look closely at the second line... is 'retrun' really a Python word? 🧐",
+      noReturn: "Make sure the line starts with the correct keyword and returns the full message.",
+      good: "Bug squashed! Penny is impressed. Cook It! 🎉"
+    },
+    coins: 25, unlocks: "Fancy neon sign ✨", isDebug: true
+  },
+  {
+    id: 5,
+    title: "Hot or Iced?",
+    concept: "If / Else",
+    customer: { name: "Coco Fox", emoji: "🦊", order: "Custom Coffee", orderEmoji: "☕",
+      dialogue: "I want my coffee EXACTLY how I like it!" },
+    goal: "Write <code>serve_coffee(temp)</code>. If <code>temp == \"hot\"</code>, return <code>\"hot coffee in a mug\"</code>. Otherwise, return <code>\"iced coffee in a cup\"</code>.",
+    starter: `def serve_coffee(temp):\n    if temp == "hot":\n        return "hot coffee in a mug"\n    else:\n        `,
+    snippets: ["return \"iced coffee in a cup\"", "if temp == \"hot\":", "else:"],
+    check: (code) => {
+      const hasDef = /def\s+serve_coffee\s*\(\s*temp\s*\)\s*:/.test(code);
+      const hasIf = /if\s+temp\s*==\s*["']hot["']\s*:/.test(code);
+      const hasElse = /else\s*:/.test(code);
+      const hasHotReturn = /return\s*["']hot coffee in a mug["']/.test(code);
+      const hasIcedReturn = /return\s*["']iced coffee in a cup["']/.test(code);
+      return { pass: hasDef && hasIf && hasElse && hasHotReturn && hasIcedReturn, hasDef, hasIf, hasElse, hasHotReturn, hasIcedReturn };
+    },
+    mascotHints: {
+      empty: "Coco wants a CHOICE in the recipe! That's what `if` and `else` are for.",
+      noDef: "Start with `def serve_coffee(temp):` — temp will be \"hot\" or anything else.",
+      noIf: "Use `if temp == \"hot\":` to check the condition — two equals signs, not one!",
+      noElse: "Now add an `else:` block underneath for when it's NOT hot.",
+      noHotReturn: "Inside the `if`, return \"hot coffee in a mug\".",
+      noIcedReturn: "Inside the `else`, return \"iced coffee in a cup\".",
+      good: "Perfect branching! Coco is delighted. Cook It! 🎉"
+    },
+    hintOrder: ["hasDef","hasIf","hasElse","hasHotReturn","hasIcedReturn"],
+    coins: 20, unlocks: "Fox plushie 🦊"
+  },
+  {
+    id: 6,
+    title: "Sweet or Sour?",
+    concept: "If / Elif / Else",
+    customer: { name: "Luna Owl", emoji: "🦉", order: "Mystery Tea", orderEmoji: "🍵",
+      dialogue: "Surprise me — but I do have a mood today..." },
+    goal: "Write <code>brew_tea(mood)</code>. If <code>mood == \"sweet\"</code> return <code>\"honey tea\"</code>. <code>elif mood == \"sour\"</code> return <code>\"lemon tea\"</code>. Else return <code>\"plain tea\"</code>.",
+    starter: `def brew_tea(mood):\n    if mood == "sweet":\n        return "honey tea"\n    elif mood == "sour":\n        \n    else:\n        `,
+    snippets: ["return \"lemon tea\"", "return \"plain tea\"", "elif mood == \"sour\":"],
+    check: (code) => {
+      const hasDef = /def\s+brew_tea\s*\(\s*mood\s*\)\s*:/.test(code);
+      const hasIf = /if\s+mood\s*==\s*["']sweet["']\s*:[\s\S]*return\s*["']honey tea["']/.test(code);
+      const hasElif = /elif\s+mood\s*==\s*["']sour["']\s*:[\s\S]*return\s*["']lemon tea["']/.test(code);
+      const hasElse = /else\s*:[\s\S]*return\s*["']plain tea["']/.test(code);
+      return { pass: hasDef && hasIf && hasElif && hasElse, hasDef, hasIf, hasElif, hasElse };
+    },
+    mascotHints: {
+      empty: "Three moods, three teas! We need `if`, `elif`, AND `else` this time.",
+      noDef: "Start with `def brew_tea(mood):`",
+      noIf: "First check: `if mood == \"sweet\":` then return \"honey tea\".",
+      noElif: "Add `elif mood == \"sour\":` then return \"lemon tea\" underneath it.",
+      noElse: "Finally an `else:` that returns \"plain tea\" for any other mood.",
+      good: "Three-way branching, nailed it! Luna hoots happily. Cook It! 🎉"
+    },
+    hintOrder: ["hasDef","hasIf","hasElif","hasElse"],
+    coins: 25, unlocks: "Owl lantern 🏮"
+  },
+  {
+    id: 7,
+    title: "Five Pancakes, Please!",
+    concept: "For Loops",
+    customer: { name: "Daisy Duck", emoji: "🦆", order: "Pancake Stack", orderEmoji: "🥞",
+      dialogue: "Quack! I want a whole stack, count them out for me!" },
+    goal: "Write <code>stack_pancakes(count)</code>. Use a <code>for</code> loop with <code>range(count)</code> to build the word <code>\"pancake \"</code> repeated <code>count</code> times, then return it.",
+    starter: `def stack_pancakes(count):\n    stack = ""\n    for i in range(count):\n        stack = stack + "pancake "\n    `,
+    snippets: ["return stack", "for i in range(count):", "stack = stack + \"pancake \""],
+    check: (code) => {
+      const hasDef = /def\s+stack_pancakes\s*\(\s*count\s*\)\s*:/.test(code);
+      const hasFor = /for\s+\w+\s+in\s+range\(\s*count\s*\)\s*:/.test(code);
+      const hasAccumulate = /stack\s*=\s*stack\s*\+\s*["']pancake\s*["']/.test(code);
+      const hasReturn = /return\s+stack\b/.test(code);
+      return { pass: hasDef && hasFor && hasAccumulate && hasReturn, hasDef, hasFor, hasAccumulate, hasReturn };
+    },
+    mascotHints: {
+      empty: "Daisy wants REPETITION — that's what `for` loops are for! Don't write \"pancake\" 5 times by hand.",
+      noDef: "Start with `def stack_pancakes(count):`",
+      noFor: "Use `for i in range(count):` to repeat an action `count` times.",
+      noAccumulate: "Inside the loop, keep building up: `stack = stack + \"pancake \"`",
+      noReturn: "After the loop ends, `return stack` to hand Daisy her pancakes!",
+      good: "Loopy and delicious! Daisy is quacking with joy. Cook It! 🎉"
+    },
+    hintOrder: ["hasDef","hasFor","hasAccumulate","hasReturn"],
+    coins: 25, unlocks: "Duck pond mat 🦆"
+  },
+  {
+    id: 8,
+    title: "Topping Time!",
+    concept: "Looping Through a List",
+    customer: { name: "Max Hedgehog", emoji: "🦔", order: "Loaded Sundae", orderEmoji: "🍨",
+      dialogue: "Pile on EVERY topping you've got!" },
+    goal: "Write <code>build_sundae(toppings)</code> where <code>toppings</code> is a list. Loop through it with <code>for topping in toppings:</code>, adding each one plus a comma to a result string, then return it.",
+    starter: `def build_sundae(toppings):\n    result = ""\n    for topping in toppings:\n        result = result + topping + ", "\n    `,
+    snippets: ["return result", "for topping in toppings:", "result = result + topping + \", \""],
+    check: (code) => {
+      const hasDef = /def\s+build_sundae\s*\(\s*toppings\s*\)\s*:/.test(code);
+      const hasFor = /for\s+topping\s+in\s+toppings\s*:/.test(code);
+      const hasAccumulate = /result\s*=\s*result\s*\+\s*topping\s*\+\s*["'],?\s*["']/.test(code);
+      const hasReturn = /return\s+result\b/.test(code);
+      return { pass: hasDef && hasFor && hasAccumulate && hasReturn, hasDef, hasFor, hasAccumulate, hasReturn };
+    },
+    mascotHints: {
+      empty: "Max brought a whole LIST of toppings — loop through each one with `for topping in toppings:`",
+      noDef: "Start with `def build_sundae(toppings):`",
+      noFor: "Loop with `for topping in toppings:` — this visits each item one by one.",
+      noAccumulate: "Inside the loop: `result = result + topping + \", \"` to keep adding toppings.",
+      noReturn: "After the loop, `return result` so Max gets his sundae!",
+      good: "Topping after topping, all looped perfectly! Max is in heaven. Cook It! 🎉"
+    },
+    hintOrder: ["hasDef","hasFor","hasAccumulate","hasReturn"],
+    coins: 30, unlocks: "Sundae glass shelf 🍨"
+  },
+  {
+    id: 9,
+    title: "The Final Order: Café Rush!",
+    concept: "If/Else + Loops Combined",
+    customer: { name: "Chef Whiskers (Boss Order!)", emoji: "🐱‍🍳", order: "Combo Special", orderEmoji: "🍱",
+      dialogue: "Time for the big test — combine everything you've learned!" },
+    goal: "Write <code>rush_hour(orders)</code>. Loop through the <code>orders</code> list. If an order is <code>\"vip\"</code>, add <code>\"⭐VIP \"</code> to the result, else add <code>\"regular \"</code>. Return the result.",
+    starter: `def rush_hour(orders):\n    result = ""\n    for order in orders:\n        if order == "vip":\n            result = result + "\u2b50VIP "\n        else:\n            result = result + "regular "\n    `,
+    snippets: ["return result", "if order == \"vip\":", "for order in orders:"],
+    check: (code) => {
+      const hasDef = /def\s+rush_hour\s*\(\s*orders\s*\)\s*:/.test(code);
+      const hasFor = /for\s+order\s+in\s+orders\s*:/.test(code);
+      const hasIf = /if\s+order\s*==\s*["']vip["']\s*:/.test(code);
+      const hasElse = /else\s*:/.test(code);
+      const hasVipAdd = /result\s*=\s*result\s*\+\s*["'].*VIP.*["']/.test(code);
+      const hasRegAdd = /result\s*=\s*result\s*\+\s*["']regular\s*["']/.test(code);
+      const hasReturn = /return\s+result\b/.test(code);
+      return { pass: hasDef && hasFor && hasIf && hasElse && hasVipAdd && hasRegAdd && hasReturn, hasDef, hasFor, hasIf, hasElse, hasVipAdd, hasRegAdd, hasReturn };
+    },
+    mascotHints: {
+      empty: "This is the big one — a loop AND a choice inside it! You've got this. 💪",
+      noDef: "Start with `def rush_hour(orders):`",
+      noFor: "Loop through with `for order in orders:`",
+      noIf: "Inside the loop, check `if order == \"vip\":`",
+      noElse: "Add an `else:` for regular orders.",
+      noVipAdd: "In the `if`, add the VIP star to result.",
+      noRegAdd: "In the `else`, add \"regular \" to result.",
+      noReturn: "Don't forget `return result` at the very end, outside the loop!",
+      good: "YOU DID IT! Loops + conditionals, mastered! Chef Whiskers salutes you. Cook It! 🎉"
+    },
+    hintOrder: ["hasDef","hasFor","hasIf","hasElse","hasVipAdd","hasRegAdd","hasReturn"],
+    coins: 40, unlocks: "Golden Chef Trophy 🏆", isFinal: true
+  },
+];
+
+const DECORATIONS = [
+  { id: "table_flower", name: "Flower Table", emoji: "🌸", cost: 10, unlockLevel: 1 },
+  { id: "bunny_poster", name: "Bunny Poster", emoji: "🐰", cost: 15, unlockLevel: 2 },
+  { id: "bear_plushie", name: "Bear Plushie", emoji: "🧸", cost: 20, unlockLevel: 3 },
+  { id: "neon_sign", name: "Neon Sign", emoji: "✨", cost: 25, unlockLevel: 4 },
+  { id: "fox_plushie", name: "Fox Plushie", emoji: "🦊", cost: 20, unlockLevel: 5 },
+  { id: "owl_lantern", name: "Owl Lantern", emoji: "🏮", cost: 25, unlockLevel: 6 },
+  { id: "duck_mat", name: "Duck Pond Mat", emoji: "🦆", cost: 25, unlockLevel: 7 },
+  { id: "sundae_shelf", name: "Sundae Shelf", emoji: "🍨", cost: 30, unlockLevel: 8 },
+  { id: "chef_trophy", name: "Golden Chef Trophy", emoji: "🏆", cost: 40, unlockLevel: 9 },
+  { id: "plant_corner", name: "Corner Plant", emoji: "🪴", cost: 30, unlockLevel: 4 },
+  { id: "cat_clock", name: "Cat Clock", emoji: "🕐🐱", cost: 35, unlockLevel: 4 },
+];
+
+/* ════════════════════════════════════════════════════════
+   PYTHON-LITE SYNTAX HIGHLIGHTER + LIVE CHECK
+   ════════════════════════════════════════════════════════ */
+const PY_KEYWORDS = ["def","return","if","else","elif","for","while","in","and","or","not","True","False","None","import","str","int","float","print"];
+
+function highlightPython(code) {
+  // Escape HTML
+  let escaped = code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  // Tokenize line by line to keep it simple & safe
+  const lines = escaped.split("\n");
+  const out = lines.map(line => {
+    // comments
+    let commentSplit = line.split(/(#.*)$/);
+    let codePart = commentSplit[0];
+    let commentPart = commentSplit[1] || "";
+
+    // strings (single or double quotes)
+    let parts = codePart.split(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g);
+    let html = parts.map((part, i) => {
+      if (i % 2 === 1) return `<span class="tok-str">${part}</span>`;
+      // keywords + numbers + function calls
+      return part.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="tok-num">$1</span>')
+                  .replace(new RegExp(`\\b(${PY_KEYWORDS.join("|")})\\b`, "g"), '<span class="tok-kw">$1</span>')
+                  .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g, '<span class="tok-fn">$1</span>');
+    }).join("");
+
+    if (commentPart) html += `<span class="tok-cm">${commentPart}</span>`;
+    return html;
+  });
+  return out.join("\n");
+}
+
+/* simple structural python-lite syntax checker for kid-friendly errors */
+function basicSyntaxIssues(code) {
+  const issues = [];
+  const lines = code.split("\n");
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    if (/^def\s+\w+\s*\([^)]*\)\s*$/.test(trimmed)) {
+      issues.push({ line: idx, msg: "Missing colon `:` at the end of the def line." });
+    }
+    if (/retrun/.test(trimmed)) {
+      issues.push({ line: idx, msg: "Did you mean `return`? Check your spelling." });
+    }
+    if (/def\s+\w+\s*\([^)]*$/.test(trimmed) && !trimmed.includes(")")) {
+      issues.push({ line: idx, msg: "Looks like a missing closing parenthesis `)`." });
+    }
+    // unbalanced quotes
+    const dq = (trimmed.match(/"/g) || []).length;
+    const sq = (trimmed.match(/'/g) || []).length;
+    if (dq % 2 !== 0) issues.push({ line: idx, msg: "Unbalanced double quotes \" on this line." });
+    if (sq % 2 !== 0) issues.push({ line: idx, msg: "Unbalanced single quotes ' on this line." });
+  });
+  return issues;
+}
+
+/* ════════════════════════════════════════════════════════
+   RECIPE EDITOR (contenteditable, real-Python-lite typing)
+   ════════════════════════════════════════════════════════ */
+class RecipeEditor {
+  constructor(level, onSubmit, onCodeChange) {
+    this.level = level;
+    this.onSubmit = onSubmit;
+    this.onCodeChange = onCodeChange;
+    this.code = level.starter;
+  }
+
+  render(container) {
+    container.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "recipe-card";
+
+    card.innerHTML = `
+      <div class="recipe-header">
+        <span class="recipe-icon">📋</span>
+        <div>
+          <div class="recipe-title">Recipe Card</div>
+          <div class="recipe-subtitle">${this.level.isDebug ? "🐛 debug_this()" : this.level.title}</div>
+        </div>
+        <div class="recipe-hint">Real Python — type it yourself!</div>
+      </div>
+      <div class="goal-box">
+        <div class="goal-box-title">🎯 Your Goal</div>
+        <div class="goal-box-text">${this.level.goal}</div>
+      </div>
+      <div class="code-editor-wrap">
+        <div class="editor-toolbar">
+          <span class="editor-dot r"></span><span class="editor-dot y"></span><span class="editor-dot g"></span>
+          <span class="editor-filename">recipe.py</span>
+        </div>
+        <div class="code-editor-stack" id="editor-stack">
+          <pre class="code-editor-backdrop" id="py-backdrop"></pre>
+          <textarea class="code-editor-input" id="py-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+        </div>
+        <div class="live-feedback idle" id="live-feedback">💬 Start typing — I'll check as you go!</div>
+        <div class="starter-tools" id="snippet-tools"></div>
+      </div>
+      <button class="btn-cook" id="cook-btn"><span>🍳</span> Cook It!</button>
+    `;
+    container.appendChild(card);
+    this.editorEl = card.querySelector("#py-editor");
+    this.backdropEl = card.querySelector("#py-backdrop");
+    this.stackEl = card.querySelector("#editor-stack");
+    this.feedbackEl = card.querySelector("#live-feedback");
+    this.cookBtn = card.querySelector("#cook-btn");
+    const toolsEl = card.querySelector("#snippet-tools");
+
+    (this.level.snippets || []).forEach(snip => {
+      const btn = document.createElement("button");
+      btn.className = "snippet-btn";
+      btn.textContent = snip.length > 28 ? snip.slice(0,26) + "\u2026" : snip;
+      btn.title = snip;
+      btn.addEventListener("click", () => this._insertSnippet(snip));
+      toolsEl.appendChild(btn);
+    });
+
+    this.editorEl.value = this.code;
+    this._renderBackdrop();
+
+    this.editorEl.addEventListener("input", () => this._handleInput());
+    this.editorEl.addEventListener("keydown", (e) => this._handleKeydown(e));
+    this.editorEl.addEventListener("scroll", () => {
+      this.backdropEl.scrollTop = this.editorEl.scrollTop;
+      this.backdropEl.scrollLeft = this.editorEl.scrollLeft;
+    });
+    this.editorEl.addEventListener("focus", () => this.stackEl.classList.add("focused"));
+    this.editorEl.addEventListener("blur", () => this.stackEl.classList.remove("focused"));
+
+    this.cookBtn.addEventListener("click", () => this._handleSubmit());
+
+    this.editorEl.focus();
+    this.editorEl.setSelectionRange(this.editorEl.value.length, this.editorEl.value.length);
+
+    this._runLiveCheck();
+  }
+
+  _renderBackdrop() {
+    this.backdropEl.innerHTML = highlightPython(this.editorEl.value) + "\n";
+  }
+
+  _handleKeydown(e) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = this.editorEl.selectionStart;
+      const end = this.editorEl.selectionEnd;
+      const val = this.editorEl.value;
+      this.editorEl.value = val.slice(0, start) + "    " + val.slice(end);
+      this.editorEl.selectionStart = this.editorEl.selectionEnd = start + 4;
+      this._handleInput();
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const start = this.editorEl.selectionStart;
+      const end = this.editorEl.selectionEnd;
+      const val = this.editorEl.value;
+      const before = val.slice(0, start);
+      const after = val.slice(end);
+      const lastLine = before.split("\n").pop();
+      const indentMatch = lastLine.match(/^(\s*)/);
+      let indent = indentMatch ? indentMatch[1] : "";
+      if (lastLine.trim().endsWith(":")) indent += "    ";
+      const insertion = "\n" + indent;
+      this.editorEl.value = before + insertion + after;
+      const newPos = start + insertion.length;
+      this.editorEl.selectionStart = this.editorEl.selectionEnd = newPos;
+      this._handleInput();
+      return;
+    }
+  }
+
+  _insertSnippet(snip) {
+    this.editorEl.focus();
+    const start = this.editorEl.selectionStart;
+    const end = this.editorEl.selectionEnd;
+    const val = this.editorEl.value;
+    this.editorEl.value = val.slice(0, start) + snip + val.slice(end);
+    const newPos = start + snip.length;
+    this.editorEl.selectionStart = this.editorEl.selectionEnd = newPos;
+    this._handleInput();
+  }
+
+  _handleInput() {
+    this.code = this.editorEl.value;
+    this._renderBackdrop();
+    this._runLiveCheck();
+    if (this.onCodeChange) this.onCodeChange(this.code);
+  }
+
+
+  _runLiveCheck() {
+    const code = this.code;
+    const result = this.level.check(code);
+    const issues = basicSyntaxIssues(code);
+
+    if (code.trim() === this.level.starter.trim() || code.trim() === "") {
+      this._setFeedback("idle", "💬 " + (this.level.mascotHints.empty || "Start typing your recipe!"));
+      this.cookBtn.disabled = false;
+      this._notifyMascot(this.level.mascotHints.empty, false);
+      return;
+    }
+
+    if (issues.length > 0) {
+      this._setFeedback("err", "✗ " + issues[0].msg);
+      this._notifyMascot(issues[0].msg, false);
+      return;
+    }
+
+    if (result.pass) {
+      this._setFeedback("ok", "✓ Looks great! Ready to cook.");
+      this._notifyMascot(this.level.mascotHints.good, true);
+    } else {
+      // figure out which specific hint to show, in priority order
+      let hint = this.level.mascotHints.good;
+      const order = this.level.hintOrder || Object.keys(result).filter(k => k !== "pass");
+      for (const flag of order) {
+        if (result[flag] === false) {
+          const hintKey = "no" + flag.replace(/^has/, "");
+          if (this.level.mascotHints[hintKey]) { hint = this.level.mascotHints[hintKey]; break; }
+        }
+      }
+      // special-case: typo hint overrides (debug level)
+      if (this.level.mascotHints.hasTypo && /retrun/.test(code)) {
+        hint = this.level.mascotHints.hasTypo;
+      }
+      this._setFeedback("err", "✗ Not quite yet — keep going!");
+      this._notifyMascot(hint, false);
+    }
+  }
+
+  _setFeedback(type, text) {
+    this.feedbackEl.className = "live-feedback " + type;
+    this.feedbackEl.textContent = text;
+  }
+
+  _notifyMascot(text, success) {
+    if (this.onCodeChange) {
+      // handled separately via mascot system in game.js section below
+    }
+    if (window.__mascotUpdate) window.__mascotUpdate(text, success);
+  }
+
+  _handleSubmit() {
+    const result = this.level.check(this.code);
+    const issues = basicSyntaxIssues(this.code);
+    const success = result.pass && issues.length === 0;
+    this.onSubmit(success);
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   MASCOT GUIDE
+   ════════════════════════════════════════════════════════ */
+class Mascot {
+  constructor(dockEl) {
+    this.dockEl = dockEl;
+    this.lastText = "";
+  }
+  say(text, mood) {
+    if (!text || text === this.lastText) return;
+    this.lastText = text;
+    const moodEmoji = mood === "good" ? "🐱‍🍳" : (mood === "err" ? "🐱" : "🐱‍🍳");
+    this.dockEl.innerHTML = `
+      <div class="mascot-char talk">${moodEmoji}</div>
+      <div class="mascot-bubble">${text}</div>
+    `;
+  }
+  idle(text) {
+    this.dockEl.innerHTML = `
+      <div class="mascot-char">🐱‍🍳</div>
+      <div class="mascot-bubble">${text}</div>
+    `;
+  }
+  clear() {
+    this.dockEl.innerHTML = "";
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   MAIN GAME
+   ════════════════════════════════════════════════════════ */
+class PetCafeGame {
+  constructor() {
+    this.currentLevelIndex = 0;
+    this.coins = 0;
+    this.completedLevels = [];
+    this.unlockedDecorations = [];
+    this.activeDecorations = [];
+    this.editor = null;
+
+    this._loadSave();
+    this._initUI();
+    this.mascot = new Mascot(this.ui.mascotDock);
+
+    window.__mascotUpdate = (text, success) => {
+      this.mascot.say(text, success ? "good" : "err");
+    };
+
+    this._startLevel();
+  }
+
+  _loadSave() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("petcafe_save_v2") || "{}");
+      this.coins = saved.coins || 0;
+      this.completedLevels = saved.completedLevels || [];
+      this.currentLevelIndex = saved.currentLevelIndex || 0;
+      this.unlockedDecorations = saved.unlockedDecorations || [];
+      this.activeDecorations = saved.activeDecorations || [];
+    } catch (_) {}
+  }
+
+  _save() {
+    localStorage.setItem("petcafe_save_v2", JSON.stringify({
+      coins: this.coins,
+      completedLevels: this.completedLevels,
+      currentLevelIndex: this.currentLevelIndex,
+      unlockedDecorations: this.unlockedDecorations,
+      activeDecorations: this.activeDecorations,
+    }));
+  }
+
+  _initUI() {
+    this.ui = {
+      coins: document.getElementById("coin-count"),
+      levelBadge: document.getElementById("level-badge"),
+      conceptBadge: document.getElementById("concept-badge"),
+      cafeScene: document.getElementById("cafe-scene"),
+      customerArea: document.getElementById("customer-area"),
+      speechBubble: document.getElementById("speech-bubble"),
+      editorArea: document.getElementById("editor-area"),
+      resultPanel: document.getElementById("result-panel"),
+      decorationBar: document.getElementById("decoration-bar"),
+      mascotDock: document.getElementById("mascot-dock"),
+      shopBtn: document.getElementById("shop-btn"),
+      shopModal: document.getElementById("shop-modal"),
+      shopClose: document.getElementById("shop-close"),
+      shopGrid: document.getElementById("shop-grid"),
+      nextBtn: document.getElementById("next-btn"),
+      retryBtn: document.getElementById("retry-btn"),
+      resultMsg: document.getElementById("result-msg"),
+      resultEmoji: document.getElementById("result-emoji"),
+      coinReward: document.getElementById("coin-reward"),
+      unlockMsg: document.getElementById("unlock-msg"),
+      progressDots: document.getElementById("progress-dots"),
+      tutorialOverlay: document.getElementById("tutorial-overlay"),
+      tutorialClose: document.getElementById("tutorial-close"),
+    };
+
+    this.ui.shopBtn.addEventListener("click", () => this._openShop());
+    this.ui.shopClose.addEventListener("click", () => this._closeShop());
+    this.ui.nextBtn.addEventListener("click", () => this._nextLevel());
+    this.ui.retryBtn.addEventListener("click", () => this._retryLevel());
+    this.ui.tutorialClose.addEventListener("click", () => this.ui.tutorialOverlay.classList.add("hidden"));
+
+    this._updateHUD();
+    this._renderDecorations();
+  }
+
+  _updateHUD() {
+    this.ui.coins.textContent = this.coins;
+    const level = LEVELS[this.currentLevelIndex];
+    if (level) {
+      this.ui.levelBadge.textContent = `Level ${level.id}`;
+      this.ui.conceptBadge.textContent = level.concept;
+    }
+    this._renderProgressDots();
+  }
+
+  _renderProgressDots() {
+    this.ui.progressDots.innerHTML = LEVELS.map((l, i) => {
+      let cls = "dot";
+      if (this.completedLevels.includes(l.id)) cls += " done";
+      else if (i === this.currentLevelIndex) cls += " active";
+      return `<div class="${cls}" title="Level ${l.id}: ${l.title}"></div>`;
+    }).join("");
+  }
+
+  _startLevel() {
+    const level = LEVELS[this.currentLevelIndex];
+    if (!level) { this._showGameComplete(); return; }
+
+    this._updateHUD();
+    this._hideResult();
+    this._showCustomer(level);
+    this.mascot.clear();
+
+    if (this.currentLevelIndex === 0 && !this.completedLevels.includes(1)) {
+      setTimeout(() => this.ui.tutorialOverlay.classList.remove("hidden"), 900);
+    }
+
+    setTimeout(() => this._showEditor(level), 2200);
+  }
+
+  _showCustomer(level) {
+    const c = level.customer;
+    this.ui.customerArea.innerHTML = `
+      <div class="customer-char" id="customer-char">
+        <div class="customer-emoji">${c.emoji}</div>
+        <div class="customer-name">${c.name}</div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById("customer-char")?.classList.add("entered"), 100);
+
+    this.ui.speechBubble.classList.remove("hidden");
+    this.ui.speechBubble.innerHTML = `
+      <div class="order-text">${c.dialogue}</div>
+      <div class="order-item">${c.orderEmoji} <strong>${c.order}</strong></div>
+    `;
+  }
+
+  _showEditor(level) {
+    this.ui.editorArea.classList.remove("hidden");
+    this.editor = new RecipeEditor(level, (success) => this._handleResult(success));
+    this.editor.render(this.ui.editorArea);
+    this.mascot.idle(level.mascotHints.empty);
+  }
+
+  _handleResult(success) {
+    const level = LEVELS[this.currentLevelIndex];
+    if (success) this._triggerSuccess(level);
+    else this._triggerFail(level);
+  }
+
+  _triggerSuccess(level) {
+    this.coins += level.coins;
+    if (!this.completedLevels.includes(level.id)) this.completedLevels.push(level.id);
+
+    const dec = DECORATIONS.find(d => d.unlockLevel === level.id);
+    if (dec && !this.unlockedDecorations.includes(dec.id)) this.unlockedDecorations.push(dec.id);
+
+    this._save();
+    this._updateHUD();
+
+    document.getElementById("customer-char")?.classList.add("happy");
+    this._coinBurst(level.coins);
+
+    setTimeout(() => {
+      this.ui.resultEmoji.textContent = "🎉";
+      this.ui.resultMsg.textContent = `${level.customer.name} loved it!`;
+      this.ui.coinReward.textContent = `+${level.coins} coins earned!`;
+      this.ui.unlockMsg.textContent = dec ? `Unlocked: ${dec.emoji} ${dec.name}!` : "";
+      this._showResult(true);
+      this._renderDecorations();
+    }, 1000);
+  }
+
+  _triggerFail(level) {
+    document.getElementById("customer-char")?.classList.add("unhappy");
+    const failEl = document.createElement("div");
+    failEl.className = "fail-animation";
+    failEl.textContent = "💥";
+    document.getElementById("cafe-scene")?.appendChild(failEl);
+    setTimeout(() => failEl.remove(), 1500);
+
+    setTimeout(() => {
+      this.ui.resultEmoji.textContent = "😬";
+      this.ui.resultMsg.textContent = "The recipe didn't quite work — check Whiskers' tips!";
+      this.ui.coinReward.textContent = "No coins this time — try again!";
+      this.ui.unlockMsg.textContent = "Fix the recipe and cook again!";
+      this._showResult(false);
+    }, 900);
+  }
+
+  _showResult(success) {
+    this.ui.resultPanel.classList.remove("hidden", "success", "fail");
+    this.ui.resultPanel.classList.add(success ? "success" : "fail");
+    this.ui.nextBtn.classList.toggle("hidden", !success);
+    this.ui.retryBtn.classList.toggle("hidden", success);
+  }
+
+  _hideResult() {
+    this.ui.resultPanel.classList.add("hidden");
+    this.ui.editorArea.classList.add("hidden");
+    this.ui.speechBubble.classList.add("hidden");
+  }
+
+  _nextLevel() {
+    this.currentLevelIndex++;
+    this.ui.customerArea.innerHTML = "";
+    this._startLevel();
+  }
+
+  _retryLevel() {
+    this._hideResult();
+    const level = LEVELS[this.currentLevelIndex];
+    this._showCustomer(level);
+    setTimeout(() => this._showEditor(level), 500);
+  }
+
+  _coinBurst(amount) {
+    const scene = document.getElementById("cafe-scene");
+    for (let i = 0; i < Math.min(amount / 5, 8); i++) {
+      const coin = document.createElement("div");
+      coin.className = "coin-burst";
+      coin.textContent = "🪙";
+      coin.style.left = (30 + Math.random() * 40) + "%";
+      coin.style.animationDelay = (i * 0.08) + "s";
+      scene.appendChild(coin);
+      setTimeout(() => coin.remove(), 1200);
+    }
+  }
+
+  _openShop() { this.ui.shopModal.classList.remove("hidden"); this._renderShop(); }
+  _closeShop() { this.ui.shopModal.classList.add("hidden"); }
+
+  _renderShop() {
+    this.ui.shopGrid.innerHTML = DECORATIONS.map(dec => {
+      const unlocked = this.unlockedDecorations.includes(dec.id);
+      const active = this.activeDecorations.includes(dec.id);
+      const canAfford = this.coins >= dec.cost;
+      let btnLabel = "🔒 Locked", btnClass = "btn-locked";
+      if (unlocked && active) { btnLabel = "✅ Active"; btnClass = "btn-active"; }
+      else if (unlocked) { btnLabel = `Buy ${dec.cost}🪙`; btnClass = canAfford ? "btn-buy" : "btn-cant"; }
+      return `
+        <div class="shop-item ${active ? "item-active" : ""}">
+          <div class="shop-emoji">${dec.emoji}</div>
+          <div class="shop-name">${dec.name}</div>
+          <button class="${btnClass}" data-dec-id="${dec.id}" ${(!unlocked || (!active && !canAfford)) ? "disabled" : ""}>${btnLabel}</button>
+        </div>`;
+    }).join("");
+
+    this.ui.shopGrid.querySelectorAll(".btn-buy").forEach(btn => {
+      btn.addEventListener("click", () => this._buyDecoration(btn.dataset.decId));
+    });
+  }
+
+  _buyDecoration(decId) {
+    const dec = DECORATIONS.find(d => d.id === decId);
+    if (!dec || this.coins < dec.cost) return;
+    this.coins -= dec.cost;
+    if (!this.activeDecorations.includes(decId)) this.activeDecorations.push(decId);
+    this._save();
+    this._updateHUD();
+    this._renderShop();
+    this._renderDecorations();
+  }
+
+  _renderDecorations() {
+    if (this.activeDecorations.length === 0) {
+      this.ui.decorationBar.innerHTML = `<span class="dec-hint">Buy decorations from the shop 🛒</span>`;
+      return;
+    }
+    this.ui.decorationBar.innerHTML = this.activeDecorations.map(id => {
+      const dec = DECORATIONS.find(d => d.id === id);
+      return dec ? `<span class="dec-item" title="${dec.name}">${dec.emoji}</span>` : "";
+    }).join("");
+  }
+
+  _showGameComplete() {
+    this.ui.cafeScene.innerHTML = `
+      <div class="game-complete">
+        <div class="complete-emoji">🏆🎊</div>
+        <h2>You're a Café Master!</h2>
+        <p>All recipes complete! Your café is thriving!</p>
+        <div class="complete-coins">Total coins: ${this.coins} 🪙</div>
+        <button class="btn-cook" onclick="location.reload()">Play Again 🔄</button>
+      </div>`;
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => { window.game = new PetCafeGame(); });
+</script>
+</body>
+</html>

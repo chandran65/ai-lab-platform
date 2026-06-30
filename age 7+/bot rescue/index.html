@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bot Rescue Squad</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <div id="topbar">
+    <div class="brand"><div class="logo">🤖</div> Bot Rescue Squad</div>
+    <div id="levelLabel">Level 1 / 10</div>
+    <div class="right">
+      <div id="stars">⭐ 0</div>
+      <div class="iconbtn" id="muteBtn" title="Mute">🔊</div>
+      <div class="iconbtn" id="mapBtn" title="Levels">🗺️</div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="scene">
+      <div id="sceneInner"></div>
+      <div class="siren"><span class="dot"></span><span id="sirenText">DISPATCH ACTIVE</span></div>
+    </div>
+
+    <div id="panel">
+      <div id="briefing">
+        <h2 id="briefTitle">Mission Briefing</h2>
+        <p id="briefText">Loading...</p>
+      </div>
+      <div id="codearea"></div>
+      <div id="hintRow"></div>
+      <div id="wordbank"></div>
+      <div id="actions">
+        <button id="tutorBtn">💡 Tip</button>
+        <button id="runBtn" disabled>▶ RUN CODE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- START OVERLAY -->
+  <div class="overlay" id="startOverlay">
+    <div class="card">
+      <div class="logo2">🤖🚒</div>
+      <h1 style="text-align:center;">Bot Rescue Squad</h1>
+      <p style="text-align:center;">Command rescue robots through 10 disaster missions — and learn real Python along the way: <b>def</b>, parameters, <b>return</b>, and function calls.</p>
+      <div class="robotsay">📻 "Squad Leader BEEP-9 here. We've got civilians trapped across the city. You write the code, I run the rescue. Ready, Commander?"</div>
+      <div id="muteRow"><input type="checkbox" id="muteCheck"> Mute sound effects</div>
+      <button class="bigbtn" id="startBtn">🚀 START MISSION 1</button>
+    </div>
+  </div>
+
+  <!-- LEVEL INTRO OVERLAY -->
+  <div class="overlay hidden" id="introOverlay">
+    <div class="card">
+      <h1 id="introTitle">Level 1</h1>
+      <p id="introStory"></p>
+      <h3>🎓 New Concept</h3>
+      <div class="robotsay" id="introTutorial"></div>
+      <button class="bigbtn" id="introStart">BEGIN RESCUE</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="overlay hidden" id="successOverlay">
+    <div class="card">
+      <h1 id="successTitle">Rescue Complete! 🎉</h1>
+      <p id="successText"></p>
+      <div class="robotsay" id="successFact"></div>
+      <button class="bigbtn" id="nextBtn">NEXT MISSION ▶</button>
+    </div>
+  </div>
+
+  <!-- MAP OVERLAY -->
+  <div class="overlay hidden" id="mapOverlay">
+    <div class="card">
+      <h1>Mission Map</h1>
+      <p>Pick any unlocked mission to replay or continue.</p>
+      <div class="levellist" id="levelGrid"></div>
+      <button class="bigbtn" id="closeMap">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- FINALE OVERLAY -->
+  <div class="overlay hidden" id="finaleOverlay">
+    <div class="card">
+      <h1>🏆 City Saved!</h1>
+      <p>You completed all 10 missions and mastered Python functions — <b>def</b>, parameters, default values, <b>return</b>, function chaining, and docstrings!</p>
+      <div class="robotsay">📻 "Every civilian is safe thanks to YOUR code, Commander. You're officially a certified Bot Rescue Squad Engineer. 🏅"</div>
+      <button class="bigbtn" id="replayBtn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+</div>
+
+
+
+<script src="js/audio.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
