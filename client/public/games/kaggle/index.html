@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML Quest – Kaggle Arena V2</title>
+  
+  <!-- Font Imports -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- PapaParse for CSV parsing in browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background decorations -->
+  <div class="glow-bg glow-bg-1"></div>
+  <div class="glow-bg glow-bg-2"></div>
+
+  <!-- Navigation Header -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <a href="../../dashboard" class="back-hub-btn" target="_parent">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </a>
+        <span class="brand-text">Kaggle Arena <span class="version-badge">V2</span></span>
+      </div>
+      
+      <div class="nav-status-group">
+        <div class="nav-status ready" id="top-status">📡 ARENA ENGINE ONLINE</div>
+        <div class="user-stats">
+          <div class="stat-badge">⚡ <span id="stat-xp">1,250 XP</span></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar + Content Workspace Layout -->
+  <div class="workspace-layout">
+    
+    <!-- Sidebar Stepper -->
+    <aside class="sidebar-stepper">
+      <h3>Pipeline Steps</h3>
+      <ul class="steps-list" id="steps-sidebar">
+        <li class="step-link active" data-step="1">
+          <span class="step-num">01</span>
+          <span class="step-name">Join Competition</span>
+        </li>
+        <li class="step-link locked" data-step="2">
+          <span class="step-num">02</span>
+          <span class="step-name">Data Exploration</span>
+        </li>
+        <li class="step-link locked" data-step="3">
+          <span class="step-num">03</span>
+          <span class="step-name">Data Cleaning</span>
+        </li>
+        <li class="step-link locked" data-step="4">
+          <span class="step-num">04</span>
+          <span class="step-name">Feature Engineering</span>
+        </li>
+        <li class="step-link locked" data-step="5">
+          <span class="step-num">05</span>
+          <span class="step-name">Model selection</span>
+        </li>
+        <li class="step-link locked" data-step="6">
+          <span class="step-num">06</span>
+          <span class="step-name">Train Model</span>
+        </li>
+        <li class="step-link locked" data-step="7">
+          <span class="step-num">07</span>
+          <span class="step-name">Model Evaluation</span>
+        </li>
+        <li class="step-link locked" data-step="8">
+          <span class="step-num">08</span>
+          <span class="step-name">Improvement Lab</span>
+        </li>
+        <li class="step-link locked" data-step="9">
+          <span class="step-num">09</span>
+          <span class="step-name">Submit Predictions</span>
+        </li>
+        <li class="step-link locked" data-step="10">
+          <span class="step-num">10</span>
+          <span class="step-name">Leaderboard</span>
+        </li>
+        <li class="step-link locked" data-step="11">
+          <span class="step-num">11</span>
+          <span class="step-name">Winner Analysis</span>
+        </li>
+        <li class="step-link locked" data-step="12">
+          <span class="step-num">12</span>
+          <span class="step-name">Battle Mode</span>
+        </li>
+        <li class="step-link locked" data-step="13">
+          <span class="step-num">13</span>
+          <span class="step-name">Career Hub</span>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Active Workspace Panel -->
+    <main class="active-workspace-panel" id="main-panel">
+      
+      <!-- STEP 1: Join Competition -->
+      <section class="pane active" id="pane-1">
+        <div class="pane-header">
+          <h2>Select Competition Mode</h2>
+          <p>Choose from live classroom challenges, procedurally generated datasets, or upload your own CSV files.</p>
+        </div>
+
+        <!-- Mode Select Tabs -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" onclick="switchSelectionMode('challenges')">Competition Board</button>
+          <button class="mode-tab" onclick="switchSelectionMode('import')">Import Custom CSV</button>
+          <button class="mode-tab" onclick="switchSelectionMode('teacher')">Teacher Panel</button>
+        </div>
+
+        <!-- Mode A: Competitions Board -->
+        <div class="selection-view" id="view-challenges">
+          <div class="competitions-selector V2-grid" id="competitions-list">
+            <!-- Dynamically Populated Procedural Competitions -->
+          </div>
+        </div>
+
+        <!-- Mode B: CSV File Importer -->
+        <div class="selection-view" id="view-import" style="display:none;">
+          <div class="card importer-card">
+            <h3>Upload Dataset Document</h3>
+            <p class="section-desc">Supported files: `.csv`, `.json`. The engine will parse structure and suggest ML tasks.</p>
+            
+            <div class="upload-dropzone" id="csv-dropzone">
+              <span class="upload-icon">📁</span>
+              <p>Drag & Drop CSV file here or <strong>Browse files</strong></p>
+              <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+            </div>
+
+            <div class="import-metadata" id="import-details" style="display:none;">
+              <h4>Dataset Detected Properties</h4>
+              <div class="metadata-grid">
+                <div class="meta-item">Rows Count: <span id="meta-rows">0</span></div>
+                <div class="meta-item">Columns Count: <span id="meta-cols">0</span></div>
+                <div class="meta-item">Target Select: 
+                  <select id="import-target-select" onchange="suggestImportTask()">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+                <div class="meta-item">Recommended Task: <span id="meta-task" class="rank-highlight">Classification</span></div>
+              </div>
+              <button class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="joinCustomImportedCompetition()">Join Imported Competition</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode C: Teacher Mode -->
+        <div class="selection-view" id="view-teacher" style="display:none;">
+          <div class="card teacher-card">
+            <h3>Generate Custom Classroom Challenge</h3>
+            <div class="teacher-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Competition Title</label>
+                  <input type="text" id="teacher-title" value="Classroom ML League - Quiz 1">
+                </div>
+                <div class="form-group">
+                  <label>Evaluation Metric</label>
+                  <select id="teacher-metric">
+                    <option value="accuracy">Mean Accuracy</option>
+                    <option value="f1">F1-Score</option>
+                    <option value="rmse">Root Mean Squared Error (RMSE)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Allowed Algorithms</label>
+                  <div class="checkbox-options">
+                    <label><input type="checkbox" id="allow-trees" checked> Tree Architectures</label>
+                    <label><input type="checkbox" id="allow-ensembles" checked> Random Forest / Gradient Boost</label>
+                    <label><input type="checkbox" id="allow-linear" checked> Linear Models / Regressors</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Dataset Setup</label>
+                  <input type="file" id="teacher-file" accept=".csv" class="teacher-file-input">
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="generateTeacherCompetition()">Generate Classroom Challenge</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Problem Statement -->
+        <div class="comp-details-box card" id="comp-details" style="margin-top: 24px;">
+          <h3 id="details-title">Healthcare: Cardiovascular Risk Predictor</h3>
+          <p id="details-desc">Predict if patient records outline active coronary risks based on biometric parameters.</p>
+          
+          <div class="comp-requirements-grid">
+            <div class="req-card">
+              <span class="req-title">Evaluation Metric</span>
+              <span class="req-value" id="comp-metric-text">Mean Accuracy</span>
+            </div>
+            <div class="req-card">
+              <span class="req-title">Recommended algorithms</span>
+              <span class="req-value" id="comp-rec-algo">Random Forest, XGBoost</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="proceedToStep(2)">Join Challenge & Load Dataset</button>
+        </div>
+      </section>
+
+      <!-- STEP 2: Data Exploration -->
+      <section class="pane" id="pane-2">
+        <div class="pane-header">
+          <h2>Interactive Data Explorer</h2>
+          <p>Inspect statistical vectors, search cells, and generate correlation heatmap maps.</p>
+        </div>
+        
+        <div class="exploration-grid">
+          <!-- Left: Data Grid -->
+          <div class="card data-table-card">
+            <div class="table-header">
+              <h3 id="explorer-filename">dataset.csv</h3>
+              <input type="text" id="explorer-search" placeholder="Search rows..." oninput="filterDataGrid()">
+            </div>
+            <div class="table-responsive">
+              <table class="csv-table" id="data-grid-table">
+                <!-- Populated dynamically -->
+              </table>
+            </div>
+          </div>
+
+          <!-- Right: Summary Statistics & Heatmaps -->
+          <div class="card stats-summary-card">
+            <h3>Feature Column summary</h3>
+            <p class="section-desc">Click column header to view statistics.</p>
+            <div class="feature-metrics" id="feature-detail-pane">
+              <div class="metric-row"><strong>Select a column header to view statistics details.</strong></div>
+            </div>
+            
+            <div class="chart-tabs">
+              <button class="chart-tab active" onclick="switchExplorationChart('dist')">Distribution</button>
+              <button class="chart-tab" onclick="switchExplorationChart('corr')">Correlation Heatmap</button>
+            </div>
+
+            <div class="chart-box" id="exploration-chart-box">
+              <div class="svg-chart-placeholder" id="exploration-canvas-container">
+                <svg width="100%" height="160" viewBox="0 0 300 160" id="exploration-svg">
+                  <!-- Rendered dynamically -->
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(3)">Proceed to Data Cleaning</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Data Cleaning -->
+      <section class="pane" id="pane-3">
+        <div class="pane-header">
+          <h2>Data Cleaning Sandbox</h2>
+          <p>Formulate decisions on missing fields and outliers. AI evaluates execution impact.</p>
+        </div>
+
+        <div class="cleaning-grid">
+          <div class="card clean-options-card">
+            <h3>Select Preprocessing Strategy</h3>
+            
+            <div class="cleaning-form" id="cleaning-inputs-container">
+              <!-- Rendered dynamically based on null columns -->
+            </div>
+
+            <div class="operation-group" style="margin-top: 15px;">
+              <button class="btn btn-primary" style="width:100%;" onclick="executeDataCleaning()">Execute Preprocessing Pipeline</button>
+            </div>
+          </div>
+
+          <div class="card quality-score-card">
+            <h3>Dataset Quality Score</h3>
+            <div class="quality-circle">
+              <span id="quality-val">60%</span>
+            </div>
+            <p class="quality-msg" id="quality-feedback">Impute missing columns to stabilize quality metrics.</p>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" id="clean-next-btn" disabled onclick="proceedToStep(4)">Proceed to Feature Engineering</button>
+        </div>
+      </section>
+
+      <!-- STEP 4: Feature Engineering -->
+      <section class="pane" id="pane-4">
+        <div class="pane-header">
+          <h2>Visual Feature Pipeline Builder</h2>
+          <p>Drag or append transformations. Connect steps sequentially into an execution pipeline.</p>
+        </div>
+
+        <div class="engineering-layout">
+          <!-- Flowchart Pipeline Builder -->
+          <div class="card pipeline-editor-card">
+            <h3>Active Preprocessing Pipeline</h3>
+            <div class="pipeline-builder" id="active-pipeline-flow">
+              <div class="pipeline-node start">
+                <strong>Input Columns</strong>
+                <p>Numeric & Categorical variables</p>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="pipeline-node" onclick="removePipelineStep('encode')">
+                <strong>One-Hot Encoder</strong>
+                <p>Cat columns -> Binary</p>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="pipeline-node" onclick="removePipelineStep('scale')">
+                <strong>StandardScaler</strong>
+                <p>Mean=0, Variance=1</p>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="pipeline-node end">
+                <strong>Target Matrix Output</strong>
+                <p>Final training split arrays</p>
+              </div>
+            </div>
+            
+            <!-- Quick Add Operations -->
+            <div class="quick-add-ops" style="margin-top: 20px;">
+              <h4>Add Operators</h4>
+              <div class="ops-row">
+                <button class="btn-action-small" onclick="addPipelineStep('poly')">+ Polynomial Features</button>
+                <button class="btn-action-small" onclick="addPipelineStep('imbalance')">+ SMOTE (Balance classes)</button>
+                <button class="btn-action-small" onclick="addPipelineStep('select')">+ SelectKBest Features</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card importance-card">
+            <h3>Computed Feature Importance Preview</h3>
+            <div class="bar-chart-container" id="importance-chart">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" id="eng-next-btn" onclick="proceedToStep(5)">Proceed to Model Selection</button>
+        </div>
+      </section>
+
+      <!-- STEP 5: Model Marketplace -->
+      <section class="pane" id="pane-5">
+        <div class="pane-header">
+          <h2>Model Marketplace</h2>
+          <p>Compare model pros, cons, and computational metrics before selecting.</p>
+        </div>
+
+        <div class="algo-selection-grid V2-grid" id="model-marketplace-container">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(6)">Proceed to Model Training</button>
+        </div>
+      </section>
+
+      <!-- STEP 6: Live Training Lab -->
+      <section class="pane" id="pane-6">
+        <div class="pane-header">
+          <h2>Live Training & Optimization Lab</h2>
+          <p>Monitor real-time metrics, GPU/CPU usage, and adjust hyperparameters mid-training.</p>
+        </div>
+
+        <div class="training-layout">
+          <!-- Left: Controllers -->
+          <div class="card train-settings-card">
+            <h3>Hyperparameters & Speed Settings</h3>
+            
+            <div class="setting-item">
+              <label>Learning Rate</label>
+              <input type="range" min="1" max="100" value="10" class="slider" id="param-lr" oninput="updateLearningRateDisplay()">
+              <div class="slider-val"><span id="lr-val">0.010</span></div>
+            </div>
+
+            <div class="setting-item">
+              <label>Total Estimators / Epochs</label>
+              <input type="range" min="10" max="150" value="80" class="slider" id="param-estimators">
+              <div class="slider-val"><span id="estimators-val">80</span> Epochs</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="training-controls" style="display:flex; gap:10px;">
+              <button class="btn btn-primary" id="start-train-btn" style="flex:1;" onclick="startModelTraining()">Start Training</button>
+              <button class="btn-action" id="pause-train-btn" disabled style="flex:1;" onclick="toggleTrainingPause()">Pause</button>
+            </div>
+            
+            <!-- GPU/CPU simulated workload meters -->
+            <div class="system-meters" style="margin-top:20px;">
+              <h4>Simulated Sandbox Load</h4>
+              <div class="meter-item">
+                <span class="meter-label">CPU Workload</span>
+                <div class="meter-bar"><div class="meter-fill" id="cpu-fill" style="width: 12%;"></div></div>
+              </div>
+              <div class="meter-item">
+                <span class="meter-label">GPU Matrix Threads</span>
+                <div class="meter-bar"><div class="meter-fill" id="gpu-fill" style="width: 0%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Training logs and live chart -->
+          <div class="card train-console-card">
+            <h3>Live Validation Metrics</h3>
+            
+            <!-- Live Training Curve Plot -->
+            <div class="svg-chart-placeholder" style="height: 140px; margin-bottom: 12px;">
+              <svg width="100%" height="130" viewBox="0 0 300 130" id="training-loss-svg">
+                <!-- Live lines updated -->
+              </svg>
+            </div>
+
+            <div class="console-output" id="training-console">
+              Waiting for training initialization...
+            </div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" id="train-next-btn" disabled onclick="proceedToStep(7)">Proceed to Evaluation</button>
+        </div>
+      </section>
+
+      <!-- STEP 7: Model Explainer -->
+      <section class="pane" id="pane-7">
+        <div class="pane-header">
+          <h2>Model Explainer (SHAP & Diagnostics)</h2>
+          <p>Inspect feature contributions, prediction confidence spreads, and misclassified test rows.</p>
+        </div>
+
+        <div class="evaluation-grid">
+          <div class="card metrics-summary-card">
+            <h3>Performance Matrix</h3>
+            <div class="metrics-grid-values">
+              <div class="eval-stat">
+                <span class="eval-label">Validation Accuracy</span>
+                <span class="eval-val" id="eval-accuracy">0.0%</span>
+              </div>
+              <div class="eval-stat">
+                <span class="eval-label">F1-Score</span>
+                <span class="eval-val" id="eval-f1">0.0%</span>
+              </div>
+              <div class="eval-stat">
+                <span class="eval-label">Model Loss</span>
+                <span class="eval-val" id="eval-loss">0.000</span>
+              </div>
+            </div>
+
+            <!-- Error Explorer list -->
+            <div class="error-explorer-box" style="margin-top: 15px;">
+              <h4>Misclassified Sample Explorer</h4>
+              <div class="table-responsive">
+                <table class="csv-table mini" id="error-samples-table">
+                  <!-- Populated dynamically -->
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SHAP feature values -->
+          <div class="card conf-matrix-card">
+            <h3>SHAP Values (Feature Contribution)</h3>
+            <p class="section-desc">Displays if variables push prediction toward Positive (1) or Negative (0) outcomes.</p>
+            <div class="shap-chart" id="shap-container">
+              <!-- Custom SHAP bar rendering -->
+            </div>
+
+            <!-- Confusion Matrix -->
+            <div class="matrix-grid" style="margin-top: 24px;">
+              <div class="matrix-cell label-col"></div>
+              <div class="matrix-cell label-row">Predict 1</div>
+              <div class="matrix-cell label-row">Predict 0</div>
+              <div class="matrix-cell label-col">Actual 1</div>
+              <div class="matrix-cell true-positive" id="cell-tp">0</div>
+              <div class="matrix-cell false-negative" id="cell-fn">0</div>
+              <div class="matrix-cell label-col">Actual 0</div>
+              <div class="matrix-cell false-positive" id="cell-fp">0</div>
+              <div class="matrix-cell true-negative" id="cell-tn">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(8)">Go to Optimization Lab</button>
+        </div>
+      </section>
+
+      <!-- STEP 8: Optimization Lab -->
+      <section class="pane" id="pane-8">
+        <div class="pane-header">
+          <h2>Optimization Lab</h2>
+          <p>Configure cross-validation, adjust class weights, and maximize leaderboard indicators.</p>
+        </div>
+
+        <div class="tuning-lab-layout">
+          <div class="card slider-panel">
+            <h3>Cross-Validation Configurations</h3>
+            <div class="setting-item">
+              <label>K-Fold Validation Split</label>
+              <select id="kfold-select" onchange="runCVOptimization()">
+                <option value="3">3-Fold Split</option>
+                <option value="5" selected>5-Fold Split</option>
+                <option value="10">10-Fold Split</option>
+              </select>
+            </div>
+            
+            <div class="setting-item">
+              <label>Regularization Penalty (C / Alpha)</label>
+              <input type="range" min="1" max="10" value="5" class="slider" id="reg-slider" oninput="runCVOptimization()">
+            </div>
+            
+            <div class="validation-score-box">
+              <span class="cv-label">Cross-Validation Score</span>
+              <span class="cv-score" id="cv-score-val">84.2%</span>
+            </div>
+          </div>
+
+          <div class="card complexity-chart-card">
+            <h3>Optimal Complexity Curve</h3>
+            <div class="svg-chart-placeholder">
+              <svg width="100%" height="200" viewBox="0 0 300 200">
+                <path d="M 20 180 Q 150 120 280 20" fill="none" stroke="#EF4444" stroke-width="2" />
+                <text x="210" y="35" fill="#EF4444" font-size="9" font-family="monospace">Training Loss</text>
+                <path d="M 20 180 Q 120 70 280 120" fill="none" stroke="#10B981" stroke-width="2" />
+                <text x="180" y="95" fill="#10B981" font-size="9" font-family="monospace">Validation Loss</text>
+                <line x1="120" y1="20" x2="120" y2="180" stroke="var(--border-color)" stroke-dasharray="4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(9)">Proceed to Submission</button>
+        </div>
+      </section>
+
+      <!-- STEP 9: Submit Predictions -->
+      <section class="pane" id="pane-9">
+        <div class="pane-header">
+          <h2>Predictive Submission Board</h2>
+          <p>Submit predictions to calculate Public vs Private leaderboard scores.</p>
+        </div>
+
+        <div class="card submit-container">
+          <div class="submit-logo">⚡</div>
+          <h3>Evaluate Prediction Array</h3>
+          <p>Calculating scores against validation targets. Public scores show on dashboard, Private scores determine final ranking.</p>
+          <button class="btn btn-primary btn-large" onclick="executeSubmission()">Submit Predictions</button>
+
+          <!-- Score Reveal -->
+          <div class="score-reveal-box" id="submission-result" style="display:none;">
+            <div class="reveal-scores" style="display:flex; justify-content:space-around; margin-bottom:12px;">
+              <div>
+                <div class="rev-val" id="public-score-val">84.2%</div>
+                <div class="rev-label">Public Score</div>
+              </div>
+              <div>
+                <div class="rev-val" id="private-score-val" style="color:var(--primary);">84.6%</div>
+                <div class="rev-label">Private Score</div>
+              </div>
+            </div>
+            <div class="streak-award" id="sub-achievement-msg">+150 XP Earned! Completed Challenge.</div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" id="sub-next-btn" disabled onclick="proceedToStep(10)">Proceed to Leaderboard</button>
+        </div>
+      </section>
+
+      <!-- STEP 10: Leaderboard -->
+      <section class="pane" id="pane-10">
+        <div class="pane-header">
+          <h2>Leaderboard Rankings</h2>
+          <p>Observe ranks shifting, submissions counts, and chosen pipeline algorithms.</p>
+        </div>
+
+        <div class="card leaderboard-card">
+          <div class="lead-tabs">
+            <button class="lead-tab active">Global Leaderboard</button>
+            <button class="lead-tab">Friends League</button>
+          </div>
+
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Student / Competitor</th>
+                <th>Private Score</th>
+                <th>Algorithm Choice</th>
+                <th>Training Time</th>
+                <th>XP Score</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(11)">Analyze Winner Strategy</button>
+        </div>
+      </section>
+
+      <!-- STEP 11: Winner Analysis -->
+      <section class="pane" id="pane-11">
+        <div class="pane-header">
+          <h2>Winner Replay Timeline</h2>
+          <p>Examine how the champion pipeline was generated step-by-step.</p>
+        </div>
+
+        <div class="winner-layout">
+          <!-- Flowchart representation -->
+          <div class="card pipeline-flow-card">
+            <h3>Champion Preprocessing Replay</h3>
+            <div class="flowchart-box" id="winner-replay-timeline">
+              <!-- Timeline nodes loaded -->
+            </div>
+          </div>
+
+          <div class="card pipeline-details-card">
+            <h3>Winning Pipeline Context</h3>
+            <p id="winner-context-desc">Loading winner notes...</p>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(12)">Go to Multiplayer Battle</button>
+        </div>
+      </section>
+
+      <!-- STEP 12: Battle Mode -->
+      <section class="pane" id="pane-12">
+        <div class="pane-header">
+          <h2>1v1 Battle Arena</h2>
+          <p>Compete in real-time on identical datasets. Ranks fluctuate on submission intervals.</p>
+        </div>
+
+        <div class="card battle-setup-card">
+          <div class="battle-header">
+            <span class="battle-title">Speed Challenge Round</span>
+            <div class="countdown-timer">⏳ Time: <span id="battle-timer">45:00</span></div>
+          </div>
+          
+          <div class="battle-scores">
+            <div class="fighter player">
+              <span class="fighter-name">You (Rookie Analyst)</span>
+              <div class="fighter-score" id="player-battle-score">84.6%</div>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="fighter opponent">
+              <span class="fighter-name">neural_ninja (Pro)</span>
+              <div class="fighter-score" id="opponent-battle-score">82.3%</div>
+            </div>
+          </div>
+
+          <div class="battle-log" id="battle-log-feed">
+            <div class="log-item">Battle server matched player: neural_ninja. Loading parameters...</div>
+          </div>
+        </div>
+
+        <div class="action-footer">
+          <button class="btn btn-primary" onclick="proceedToStep(13)">Go to Career Track</button>
+        </div>
+      </section>
+
+      <!-- STEP 13: Career Hub -->
+      <section class="pane" id="pane-13">
+        <div class="pane-header">
+          <h2>Career Tracks & Credentials</h2>
+          <p>Unlock corporate tracks and rise from Junior Analyst to Chief AI Officer.</p>
+        </div>
+
+        <div class="career-progress-section card" style="margin-bottom: 24px;">
+          <h3>Your Professional Rank</h3>
+          <div class="career-title-badge" id="career-badge-title">Junior Data Analyst</div>
+          <div class="progress-track" style="margin-top: 15px;">
+            <div class="progress-bar" id="career-progress-bar" style="width: 25%;"></div>
+          </div>
+          <p class="section-desc" style="margin-top: 8px;" id="career-progress-text">Level up XP to unlock Senior status.</p>
+        </div>
+
+        <div class="grandmaster-tracks">
+          <!-- Card 1: Healthcare -->
+          <div class="track-card card" id="career-track-health">
+            <h3>Healthcare Track</h3>
+            <p>Diagnose disease vectors using biometric datasets.</p>
+            <div class="track-status" id="status-health">Unlocked</div>
+          </div>
+
+          <!-- Card 2: Finance -->
+          <div class="track-card card locked" id="career-track-finance">
+            <div class="lock-overlay" id="lock-finance">🔒 Unlocks at 2,000 XP</div>
+            <h3>Finance & Fraud Track</h3>
+            <p>Analyze transaction logs to predict fraud anomalies.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Random Event Modal Popup Overlay -->
+  <div class="random-event-modal" id="random-event-modal" style="display:none;">
+    <div class="event-content card">
+      <div class="event-header">
+        <span class="event-alert-icon">⚠️</span>
+        <h3>Random Event Triggered!</h3>
+      </div>
+      <div class="event-body">
+        <strong id="event-title-text">Client Dataset Update</strong>
+        <p id="event-desc-text">The client supplied updated passenger logs. Outliers have increased in Fare values.</p>
+      </div>
+      <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="closeRandomEventModal()">Acknowledge & Adapt</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>

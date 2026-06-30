@@ -1,115 +1,126 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Poppins:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    --radius: 0.5rem
+    --bg-warm: #FFF9F0;
+    --bg-ivory: #FFFCF8;
+    --honey-soft: #FFD76A;
+    --gold-brand: #F4B942;
+    
+    /* Accents */
+    --accent-sky: #69B8FF;
+    --accent-mint: #8BE39B;
+    --accent-coral: #FF9BAA;
+    --accent-lavender: #B59CFF;
+    --accent-peach: #FFC88A;
+    
+    --success-emerald: #10B981;
+    --error-red: #EF4444;
+    
+    /* Typography */
+    --font-display: "Nunito", sans-serif;
+    --font-body: "Nunito", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+    
+    /* Spacing */
+    --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+    --space-4: 16px;  --space-5: 24px;  --space-6: 32px;
+    --space-7: 48px;  --space-8: 64px;
+
+    /* Radius */
+    --radius-sm: 12px;  --radius-md: 20px;
+    --radius-lg: 28px;  --radius-xl: 36px;
+  }
+  
+  body {
+    background: linear-gradient(180deg, var(--bg-ivory) 0%, var(--bg-warm) 100%);
+    color: #334155;
+    font-family: var(--font-body);
+    min-height: 100vh;
   }
 }
 
-:root {
-  --font-heading: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  
-  --shadow-glow: 0 0 25px rgba(255, 215, 0, 0.45);
-  
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 32px;
-  
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
-}
-
-/* Glassmorphism Styles */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+/* Adventure UI Elements */
+.adventure-card {
+  background: var(--bg-ivory);
+  border: 2px solid rgba(255, 215, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(244, 185, 66, 0.04);
   border-radius: var(--radius-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 350ms cubic-bezier(.22, 1, .36, 1);
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-  border-radius: var(--radius-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.adventure-card:hover {
+  transform: scale(1.02) translateY(-6px);
+  box-shadow: 0 16px 32px rgba(244, 185, 66, 0.12);
+  border-color: var(--gold-brand);
 }
 
-.glass-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  border-color: rgba(255, 255, 255, 0.8);
-}
-
-/* Custom interactive inputs & buttons */
-.btn-premium {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 12px 28px;
+.btn-adventure-primary {
+  background: linear-gradient(135deg, #FFD76A 0%, #F4B942 100%);
+  color: #3f2203; /* High contrast brown/dark text */
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(244, 185, 66, 0.3);
+  transition: all 250ms cubic-bezier(.22, 1, .36, 1);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
-  transition: all 0.25s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.btn-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+.btn-adventure-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 18px rgba(244, 185, 66, 0.45);
 }
 
-.btn-premium:active {
-  transform: translateY(0);
+.btn-adventure-primary:active {
+  transform: translateY(0) scale(1);
 }
 
-.btn-glass {
-  font-family: var(--font-heading);
+.btn-adventure-secondary {
+  background: var(--bg-ivory);
+  border: 2px solid rgba(244, 185, 66, 0.25);
+  color: #a16207;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #0f172a;
-  padding: 10px 20px;
+  transition: all 200ms ease;
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
 }
 
-.btn-glass:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+.btn-adventure-secondary:hover {
+  background: rgba(255, 215, 0, 0.05);
+  border-color: var(--gold-brand);
 }
 
-/* Animations */
-@keyframes popup {
-  from {
-    transform: scale(0.9) translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
+/* Floating Animation elements */
+.floating-buddy {
+  animation: float-buddy 4s ease-in-out infinite;
+}
+
+@keyframes float-buddy {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Cloud movement background animation */
+.cloud-drift {
+  animation: cloud-drift 60s linear infinite;
+}
+
+@keyframes cloud-drift {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100vw); }
+}
+
+/* Sparkle twinkle effect */
+.twinkle-sparkle {
+  animation: sparkle 2.5s infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* Existing Weather animations */
@@ -235,4 +246,3 @@
     transform: translateX(120vw) translateY(10px);
   }
 }
-

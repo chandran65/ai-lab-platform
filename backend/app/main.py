@@ -837,3 +837,120 @@ async def admin_list_users(current_user: dict = Depends(get_current_user)):
     with get_db() as db:
         rows = db.execute("SELECT id,email,full_name,role,school_id,is_active,created_at,last_login_at FROM users ORDER BY created_at DESC").fetchall()
     return [dict(r) for r in rows]
+
+# ======================== ML QUEST / KAGGLE ARENA ========================
+
+import pandas as pd
+import numpy as np
+from app.utils.data_generator import generate_house_prices, generate_spam_data, generate_student_scores
+from app.services.ml_service import train_tabular_model
+
+class TrainRequest(BaseModel):
+    challenge_id: str
+    algorithm: str
+    hyperparameters: Dict[str, Any]
+    preprocessing: Dict[str, Any]
+    selected_features: List[str]
+
+class EvaluateRequest(BaseModel):
+    challenge_id: str
+    predictions: List[float]
+
+@app.get("/api/ml/synthesize")
+def get_dataset_preview(challenge_id: str):
+    """
+    Returns dataset stats, features, and sample points to enable charting distributions in Recharts.
+    """
+    try:
+        if challenge_id == 'house_prices':
+            df = generate_house_prices(n_samples=100)
+            description = "House sales price dataset (Ames, Iowa)."
+        elif challenge_id == 'spam_filter':
+            df = generate_spam_data(n_samples=50)
+            description = "SMS text message spam vs ham classifier dataset."
+        elif challenge_id == 'student_scores':
+            df = generate_student_scores(n_samples=100)
+            description = "Student records and final exam scores forecast."
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid challenge_id: {challenge_id}")
+
+        # Replace NaN values with appropriate representations for JSON encoding
+        df_json = df.fillna("").to_dict(orient="records")
+        features = [c for c in df.columns if c not in ['price', 'label', 'final_score']]
+        
+        return {
+            "challenge_id": challenge_id,
+            "description": description,
+            "features": features,
+            "sample_data": df_json[:50],
+            "total_samples": 500 if challenge_id != 'spam_filter' else 250
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ml/train-tabular")
+def train_model(payload: TrainRequest):
+    """
+    Triggers Scikit-Learn training pipelines for Linear Regression, Logistic Regression, 
+    Decision Trees, Random Forests, or KMeans. Returns metrics and explainability parameters.
+    """
+    try:
+        results = train_tabular_model(
+            challenge_id=payload.challenge_id,
+            algorithm=payload.algorithm,
+            hyperparameters=payload.hyperparameters,
+            preprocessing=payload.preprocessing,
+            selected_features=payload.selected_features
+        )
+        return results
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ml/evaluate")
+def evaluate_predictions(payload: EvaluateRequest):
+    """
+    Evaluates predictions submitted for a Kaggle Arena competition, calculating metric score.
+    """
+    try:
+        challenge_id = payload.challenge_id
+        user_preds = np.array(payload.predictions)
+
+        # Generate ground truth for testing
+        if challenge_id == 'house_prices':
+            test_df = generate_house_prices(n_samples=150, is_test=False)
+            y_true = test_df['price'].values
+            if len(user_preds) != len(y_true):
+                user_preds = np.resize(user_preds, len(y_true))
+            rmse = float(np.sqrt(np.mean((y_true - user_preds) ** 2)))
+            score = rmse
+            metric = "RMSE"
+        elif challenge_id == 'spam_filter':
+            test_df = generate_spam_data(n_samples=50, is_test=False)
+            y_true = test_df['label'].values
+            if len(user_preds) != len(y_true):
+                user_preds = np.resize(user_preds, len(y_true))
+            user_preds_bin = (user_preds >= 0.5).astype(int)
+            accuracy = float(np.mean(y_true == user_preds_bin))
+            score = accuracy
+            metric = "Accuracy"
+        elif challenge_id == 'student_scores':
+            test_df = generate_student_scores(n_samples=100, is_test=False)
+            y_true = test_df['final_score'].values
+            if len(user_preds) != len(y_true):
+                user_preds = np.resize(user_preds, len(y_true))
+            mae = float(np.mean(np.abs(y_true - user_preds)))
+            score = mae
+            metric = "MAE"
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid challenge_id: {challenge_id}")
+
+        return {
+            "challenge_id": challenge_id,
+            "score": score,
+            "metric": metric,
+            "message": f"Submission successfully evaluated. Your {metric} is {score:.4f}."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

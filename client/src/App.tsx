@@ -23,6 +23,8 @@ import WeatherApp from "./games/weather/App";
 import FeedPuppy from "./games/puppy/FeedPuppy";
 import ColourMagic from "./games/color/ColourMagic";
 import BeeFlowerPath from "./games/bee/BeeFlowerPath";
+import ClassifierGame from "./games/classifier/ClassifierGame";
+import { KaggleArena } from "./games/kaggle/KaggleArena";
 import Profile from "./pages/Profile";
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
             <Route path="/games/puppy" element={<FeedPuppy />} />
             <Route path="/games/color" element={<ColourMagic />} />
             <Route path="/games/bee" element={<BeeFlowerPath />} />
+            <Route path="/games/classifier" element={<ClassifierGame />} />
+            <Route path="/games/kaggle" element={<KaggleArena />} />
             <Route path="/sandbox" element={<Dashboard />} />
             <Route path="/activities" element={<Activities />} />
             <Route path="/projects" element={<Projects />} />

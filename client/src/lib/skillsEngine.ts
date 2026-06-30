@@ -29,6 +29,8 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
   const train = allProgress["train_builder"] || {};
   const turtle = allProgress["turtle_path"] || {};
   const weather = allProgress["weather_adventure"] || {};
+  const classifier = allProgress["image_classifier"] || {};
+  const kaggle = allProgress["kaggle_arena"] || {};
 
   const beeLvl = bee.maxUnlockedLevel || 0;
   const colorLvl = color.maxUnlockedLevel || 0;
@@ -36,6 +38,10 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
   const trainLvl = train.maxUnlockedLevel || 0;
   const turtleLvl = turtle.maxUnlockedLevel || 0;
   const weatherLvl = weather.level || 1;
+  const classifierBestAcc = classifier.bestAccuracy || 0;
+  const classifierTrained = classifier.modelsTrained || 0;
+  const classifierRuns = classifier.experimentsRun || 0;
+  const kaggleAttempts = kaggle.attempts || 0;
 
   // 1. SHARP (Precision & Accuracy)
   const sharpScores: number[] = [];
@@ -52,6 +58,9 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
     const avgEff = bee.history.reduce((sum: number, r: any) => sum + (r.efficiency || 0), 0) / bee.history.length;
     sharpScores.push(avgEff);
   }
+  if (classifierBestAcc > 0) {
+    sharpScores.push(classifierBestAcc);
+  }
   const sharp = sharpScores.length > 0 ? Math.round(sharpScores.reduce((a, b) => a + b, 0) / sharpScores.length) : 0;
 
   // 2. THINKER (Logic & Planning)
@@ -65,6 +74,9 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
   }
   if (trainLvl > 0) {
     thinkerScores.push(Math.min(100, (trainLvl / 8) * 100));
+  }
+  if (kaggleAttempts > 0) {
+    thinkerScores.push(Math.min(100, kaggleAttempts * 20));
   }
   const thinker = thinkerScores.length > 0 ? Math.round(thinkerScores.reduce((a, b) => a + b, 0) / thinkerScores.length) : 0;
 
@@ -80,11 +92,14 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
   if (weather.relicsDiscovered !== undefined) {
     patientScores.push(Math.min(100, (weather.relicsDiscovered / 5) * 100));
   }
+  if (classifierTrained > 0) {
+    patientScores.push(Math.min(100, (classifierTrained / 8) * 100));
+  }
   const patient = patientScores.length > 0 ? Math.round(patientScores.reduce((a, b) => a + b, 0) / patientScores.length) : 0;
 
   // 4. CONSISTENT (Steadiness & Work Ethic)
-  const totalCompleted = beeLvl + colorLvl + puppyLvl + trainLvl + turtleLvl + (weatherLvl - 1);
-  const maxPossible = 10 + 10 + 10 + 8 + 5 + 5;
+  const totalCompleted = beeLvl + colorLvl + puppyLvl + trainLvl + turtleLvl + (weatherLvl - 1) + (classifierTrained > 0 ? 5 : 0) + (kaggleAttempts > 0 ? 5 : 0);
+  const maxPossible = 10 + 10 + 10 + 8 + 5 + 5 + 5 + 5;
   const consistent = Math.min(100, Math.round((totalCompleted / maxPossible) * 100));
 
   // 5. PERSEVERANCE (Resilience & Grit)
@@ -97,6 +112,12 @@ export function evaluateSkills(allProgress: Record<string, any>): Record<string,
   }
   if (totalCompleted > 0) {
     perseveranceScores.push(Math.min(100, (totalCompleted / 10) * 100));
+  }
+  if (classifierRuns > 0) {
+    perseveranceScores.push(Math.min(100, (classifierRuns / 5) * 100));
+  }
+  if (kaggleAttempts > 0) {
+    perseveranceScores.push(Math.min(100, (kaggleAttempts / 5) * 100));
   }
   const perseverance = perseveranceScores.length > 0 ? Math.round(perseveranceScores.reduce((a, b) => a + b, 0) / perseveranceScores.length) : 0;
 
@@ -179,6 +200,8 @@ export function getBadges(scores: Record<string, number>, allProgress: Record<st
   const train = allProgress["train_builder"] || {};
   const turtle = allProgress["turtle_path"] || {};
   const weather = allProgress["weather_adventure"] || {};
+  const classifier = allProgress["image_classifier"] || {};
+  const kaggle = allProgress["kaggle_arena"] || {};
 
   const beeLvl = bee.maxUnlockedLevel || 0;
   const colorLvl = color.maxUnlockedLevel || 0;
@@ -186,8 +209,12 @@ export function getBadges(scores: Record<string, number>, allProgress: Record<st
   const trainLvl = train.maxUnlockedLevel || 0;
   const turtleLvl = turtle.maxUnlockedLevel || 0;
   const weatherLvl = weather.level || 1;
+  const classifierBestAcc = classifier.bestAccuracy || 0;
+  const classifierTrained = classifier.modelsTrained || 0;
+  const classifierRuns = classifier.experimentsRun || 0;
+  const kaggleAttempts = kaggle.attempts || 0;
 
-  const totalCompleted = beeLvl + colorLvl + puppyLvl + trainLvl + turtleLvl + (weatherLvl - 1);
+  const totalCompleted = beeLvl + colorLvl + puppyLvl + trainLvl + turtleLvl + (weatherLvl - 1) + (classifierTrained > 0 ? 5 : 0) + (kaggleAttempts > 0 ? 5 : 0);
 
   return [
     // --- SHARP BADGES ---
@@ -348,6 +375,58 @@ export function getBadges(scores: Record<string, number>, allProgress: Record<st
       stage: 3,
       criteria: "Complete 25 total levels across all games",
       unlocked: totalCompleted >= 25
+    },
+    // --- DEEP LEARNING BADGES ---
+    {
+      id: "dl_1",
+      name: "Data Alchemist",
+      description: "Trained your first deep learning models.",
+      icon: "🧪",
+      skill: "Patience",
+      stage: 1,
+      criteria: "Train at least 2 models in AI Learning Lab Pro",
+      unlocked: classifierTrained >= 2
+    },
+    {
+      id: "dl_2",
+      name: "Model Validator",
+      description: "Achieved excellent model generalizability.",
+      icon: "📊",
+      skill: "Sharpness",
+      stage: 2,
+      criteria: "Achieve at least 80% accuracy in AI Learning Lab Pro",
+      unlocked: classifierBestAcc >= 80
+    },
+    {
+      id: "dl_3",
+      name: "Deep Guru",
+      description: "Ran multiple thorough training experimentation cycles.",
+      icon: "🔮",
+      skill: "Perseverance",
+      stage: 3,
+      criteria: "Execute at least 4 training experiments in AI Learning Lab Pro",
+      unlocked: classifierRuns >= 4
+    },
+    // --- KAGGLE ARENA BADGES ---
+    {
+      id: "kaggle_1",
+      name: "Arena Competitor",
+      description: "Made your first submission to the Kaggle Leaderboard.",
+      icon: "🎯",
+      skill: "Perseverance",
+      stage: 1,
+      criteria: "Submit at least 1 model in Kaggle Competition Arena",
+      unlocked: kaggleAttempts >= 1
+    },
+    {
+      id: "kaggle_2",
+      name: "Tabular Wizard",
+      description: "Optimized features and pipelines to beat the baseline.",
+      icon: "🥇",
+      skill: "Thinker",
+      stage: 2,
+      criteria: "Submit at least 3 model evaluations in Kaggle Competition Arena",
+      unlocked: kaggleAttempts >= 3
     }
   ];
 }
